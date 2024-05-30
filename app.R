@@ -1,11 +1,22 @@
 
 library(shiny)
 library(shinythemes)
+library(shinyBS)
 library(DT)
 library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(plotly)
+library(colourpicker)
+library(corrplot)
+library(reshape2)
+
+data <- read.csv(
+  file = "Table_Ciqual_2020_FR_2020_07_07.csv",
+  header = TRUE,
+  sep = ";",
+  fileEncoding = "latin1"
+)
 
 # Définir les listes prédéfinies
 mouvements <- c("Muscle up", "Squat", "Pull Up", "Dips", "Bench", "Deadlift", "Renfo")
@@ -13,101 +24,212 @@ muscles <- c("Pectoraux","Abdominaux", "Trapèzes", "Dorsaux", "Epaules", "Quadr
 
 ui <- fluidPage(theme = shinytheme("cyborg"),
                 shinythemes::themeSelector(),
-  navbarPage(
-    "Gym Tracker",
-    tabPanel("1RM",
-             sidebarPanel(
-               h4("Calculateur théorique de 1RM"),
-               numericInput("charge", "Charge soulevée (kg)", value = 100, label = "Entrez la charge :"),
-               numericInput("repetitions", "Nombre de répétitions", value = 3, step = 1, label = "Entrez le nombre de répétitions :"),
-               numericInput("poids_corps", "Poids de corps (kg) (pour exercices lestés)", value = 0, label = "Entrez votre poids de corps :"),
-               verbatimTextOutput("resultat_1rm"),
-               tags$p("Note : La formule est précise pour 2 à 5 répétitions.", style = "font-size: 90%;"),
-               tags$p("Formule de Brzycki : 1RM = Charge soulevée / (1.0278 – (0.0278 x nRépétitions))", style = "font-size: 90%;")
-             ),
-             mainPanel(
-               titlePanel("Entrez vos répétitions maximales"),
-               uiOutput("exercices"),
-               dataTableOutput("table_1rm")
-             )
-    ),
+                navbarPage("Gym Tracker",
+                           
+                           tabPanel("Présentation",
+                                    sidebarPanel(
+                                      h4("Bienvenue dans Gym Tracker"),
+                                      p("Cette application vous aide à suivre et à planifier vos séances d'entraînement."),
+                                      h4("Fonctionnalités"),
+                                      tags$ul(
+                                        tags$li("Planifiez vos séances d'entraînement hebdomadaires."),
+                                        tags$li("Ajoutez et personnalisez vos exercices."),
+                                        tags$li("Visualisez vos statistiques d'entraînement."),
+                                        tags$li("Calculez vos performances théoriques."),
+                                        tags$li("Obtenez des conseils sur les exercices."),
+                                        tags$li("Prenez connaissance des bases de la nutrition sportive.")
+                                      ),
+                                      h4("Instructions"),
+                                      p("Utilisez les onglets en haut pour naviguer à travers les différentes fonctionnalités de l'application."),
+                                      tags$ul(
+                                        tags$li("Entraînement : Planifiez et éditez vos séances."),
+                                        tags$li("Conseils : Obtenez des recommandations d'exercices."),
+                                        tags$li("Nutrition : Obtenez les bases de la nutrition sportive."),
+                                        tags$li("Sources : Consultez les références utilisées.")
+                                      )
+                                    )
+                           ),
+    
     tabPanel("Entraînement",
              sidebarPanel(
                h4("Modulez votre semaine type d'entraînement"),
                sliderInput("seances_par_semaine", "Nombre de séances par semaine:", min = 1, max = 7, value = 3),
                uiOutput("seance_select"),
-               actionButton("ajouter_ligne", "Ajouter un exercice", icon = icon("plus"), value = 0),
+               actionButton("ajouter_ligne", "Ajouter un exercice", icon = icon("plus")),
                actionButton("supprimer_ligne", "Supprimer un exercice", icon = icon("minus")),
-               actionButton("export_pdf", "Exporter en PDF"),
+               plotlyOutput("set_pie_chart"),
+               actionButton("export_pdf", "Exporter en PDF")
              ),
-             mainPanel(
+             mainPanel(width = 8,
                titlePanel("Editez vos séances"),
                uiOutput("sous_onglets")
                )
              ),
-    tabPanel("Statistiques",
+    
+    tabPanel("Conseils",
              mainPanel(
-               titlePanel("Quelques statistiques"),
+               titlePanel("Quelques conseils"),
                tabsetPanel(
                  tabPanel("Volume",
-                          h4("De façon générale, pour l'hypertrophie, il est conseillé de réaliser entre 10 et 20 séries par groupe musculaire par semaine."),
                           fluidRow(
-                            sidebarPanel(width = 6, plotlyOutput("set_pie_chart")),
-                            sidebarPanel(width = 6, plotlyOutput("general_muscles_plot"))
-                          )
-                 ),
-                 tabPanel("Tonnage",
-                          h4("Le tonnage total est le produit du nombre de séries, de répétitions et de la charge utilisée."),
+                            sidebarPanel(width = 6, 
+                                         plotlyOutput("general_muscles_plot")),
+                            sidebarPanel(width = 6,
+                                         h4("Combien de séries par groupes musculaires ?"),
+                                         actionButton(inputId = "moins_de_5_ans", label = "Moins de 5 ans d'expérience"),
+                                         actionButton(inputId = "plus_de_5_ans", label = "Plus de 5 ans d'expérience"),
+                                         bsTooltip(id = "moins_de_5_ans",
+                                                   title = "Pour developper la qualité voulue, il est conseillé de réaliser entre 10 et 20 séries par groupe musculaire par semaine",
+                                                   trigger = "hover"),
+                                         bsTooltip(id = "plus_de_5_ans",
+                                                   title = "Pour developper la qualité voulue, il est conseillé de réaliser entre 5 et 15 séries par groupe musculaire par semaine",
+                                                   trigger = "hover")
+                                         )
+                            )
+                          ),
+                 tabPanel("Calculs théoriques",
                           fluidRow(
                             sidebarPanel(width = 6,
                                          h4("Calculateur théorique du tonnage"),
                                          numericInput("set", "Nombre de séries :", min = 0, value = 0),
-                                         numericInput("rep", "Nombre de répétitions :", min = 0, value = 0),
+                                         numericInput("rep", "Nombre de répétitions :", min = 0, max = 20, value = c(6,8)),
                                          numericInput("kg", "Charge utilisée (en kg) :", min = 0, value = 0),
-                                         verbatimTextOutput("result")
+                                         verbatimTextOutput("result"),
+                                         tags$p("Note : Le tonnage total est le produit du nombre de séries, de répétitions et de la charge utilisée.", style = "font-size: 90%;")
+                            ),
+                            sidebarPanel(width = 6,
+                              h4("Calculateur théorique de 1RM"),
+                              numericInput("charge", "Charge soulevée (kg)", value = 100, label = "Entrez la charge :"),
+                              numericInput("repetitions", "Nombre de répétitions", value = 3, step = 1, label = "Entrez le nombre de répétitions :"),
+                              numericInput("poids_corps", "Poids de corps (kg) (pour exercices lestés)", value = 0, label = "Entrez votre poids de corps :"),
+                              verbatimTextOutput("resultat_1rm"),
+                              tags$p("Note : La formule est précise pour 2 à 5 répétitions.", style = "font-size: 90%;"),
+                              tags$p("Formule de Brzycki : 1RM = Charge soulevée / (1.0278 – (0.0278 x nRépétitions))", style = "font-size: 90%;")
                             )
                           )
                  ),
-                 tabPanel("Progression",
-                          h4("Observez votre progression potentielle"),
-                          sidebarPanel(width = 4,
-                                       h4("Extrapolez selon la durée de votre bloc"),
-                                       sliderInput("extrapolation", "Durée de votre bloc:", min = 1, max = 10, value = 4),
-                                       sliderInput("force_extrapolation", "Potentielle progression par semaine (en %):", min = 1, max = 5, value = 3)
-                          ),
-                          sidebarPanel(width = 8,
-                                       plotlyOutput("strong_extrapolation_plot")
-                                       )
+                 tabPanel("Renforcement",
+                          mainPanel(
+                              tabPanel("Force",
+                                       sidebarPanel(width = 6,
+                                                    h4("Force"),
+                                                    selectInput("mouvement", "Choisir un mouvement :",
+                                                                choices = c("Muscle up", "Squat", "Pull Up", "Dips", "Bench", "Deadlift")),
+                                                    tableOutput("exercice"),
+                                                    tableOutput("muscles_cibles")
+                                                    ),
+                                       sidebarPanel(width = 6,
+                                                    h4("Muscle"),
+                                                    selectInput("muscle", "Choisir un muscle :",
+                                                                choices = muscles),
+                                                    tableOutput("exercices_muscle")
+                                                    ),
+                                       sidebarPanel(width = 4,
+                                                    h4("Course à pied"),
+                                                    tableOutput("exercices_course")
+                                       
+                              )
+                            )
                           )
+                 )
                  )
                )
              ),
-    tabPanel("Conseils",
+    
+    tabPanel("Nutrition",
              mainPanel(
-               titlePanel("Exercices de renforcement"),
+               titlePanel("Quelques bases"),
                tabsetPanel(
-                 tabPanel("Force et muscles",
-                          sidebarPanel(width = 6,
-                                       h4("Force"),
-                                       selectInput("mouvement", "Choisir un mouvement :",
-                                                   choices = c("Muscle up", "Squat", "Pull Up", "Dips", "Bench", "Deadlift")),
-                                       tableOutput("exercice"),
-                                       tableOutput("muscles_cibles")
-                          ),
-                          sidebarPanel(width = 6,
-                                       h4("Muscle"),
-                                       selectInput("muscle", "Choisir un muscle :",
-                                                   choices = muscles),
-                                       tableOutput("exercices_muscle")
-                          )
+               tabPanel("Macronutriments",
+                 sidebarPanel(
+                   selectInput(inputId = "nutrient", label = "Sélectionner le nutriment :", 
+                               choices = c("Protéines" = "proteines", "Glucides" = "glucides", "Lipides" = "lipides")),
+                   radioButtons(inputId = "select_level", label = "Sélectionner le niveau : ",
+                                choices = c("Groupes" = "alim_grp_nom_fr",
+                                            "Sous-groupes" = "alim_ssgrp_nom_fr",
+                                            "Sous-sous-groupes" = "alim_ssssgrp_nom_fr")),
+                   colourInput(inputId = "hist_color", label = "Choisir une couleur", value = "#C43413")
                  ),
-                 tabPanel("Course à pied",
-                          h4("Exercices de renforcement pour la course à pied"),
-                          tableOutput("exercices_course")
+                 mainPanel(
+                   plotlyOutput("histogram", height = 600)
                  )
-               )
-             )
-    ),
+             ),
+             tabPanel("Corrélation",
+                      fluidRow(
+                        sidebarPanel(width = 7,
+                                     plotlyOutput("corr_Heatmap"),
+                                     selectInput(inputId = "number", label = "Sélectionner un numéro :", choices = as.character(seq(10, 76, 1))),
+                                     textOutput("corresponding_name")
+                                     ),
+                        sidebarPanel(width = 5,
+                                     h4("Que dit ce graphique ?"),
+                                     actionButton(inputId = "correlation_interpretation_p", label = "Exemple de corrélation positive "),
+                                     actionButton(inputId = "correlation_interpretation_n", label = "Exemple de corrélation négative"),
+                                     bsTooltip(id = "correlation_interpretation_p",
+                                               title = "Les Lipides (n°18) sont corrélés positivement avec les AG saturés (n°32), AG monoinsaturés (n°32), et AG polyinsaturés (n°34), mais aussi avec les acides oléiques (n°43) et palmitiques (n°41).",
+                                               trigger = "hover"),
+                                     bsTooltip(id = "correlation_interpretation_n",
+                                               title = "L'Eau (n°14) est corrélée négativement avec notamment l'énergie (n°10:13), les Glucides (n°17) et les Lipides (n°18).",
+                                               trigger = "hover")
+                        )
+                        )
+                        ),
+             tabPanel("Et moi ?",
+                      fluidRow(
+                        sidebarPanel(
+                          numericInput("age", "Âge", value = 25, min = 0),
+                          selectInput("sex", "Sexe", choices = c("Homme", "Femme")),
+                          numericInput("weight", "Poids (kg)", value = 70, min = 0),
+                          numericInput("height", "Taille (cm)", value = 175, min = 0),
+                          selectInput("activity", "Niveau d'activité", choices = c(
+                            "Sédentaire (Peu ou pas d'exercice)" = 1.2,
+                            "Légèrement actif (exercices/sports légers 3 à 5 jours par semaine)" = 1.375,
+                            "Modérément actif (exercice/sports modérés 3 à 5 jours par semaine)" = 1.55,
+                            "Très actif (exercice intense/sports 6 à 7 jours par semaine)" = 1.725,
+                            "Extra actif (exercices intenses/sports 6 à 7 jours par semaine, plus travail physique)" = 1.9
+                          )),
+                          selectInput("goal", "Objectif", choices = c(
+                            "Perte de poids" = "weight_loss",
+                            "Maintien du poids" = "maintenance",
+                            "Prise de muscle" = "muscle_gain"
+                          )),
+                          actionButton("calculate", "Calculer")
+                        ),
+                        mainPanel(
+                          h4("Résultats"),
+                          textOutput("calories"),
+                          textOutput("protein"),
+                          textOutput("fat"),
+                          textOutput("carbs")
+                          ),
+                        sidebarPanel(width = 8,
+                                     h4("Comment fonctionne le calculateur ?"),
+                                     p("Il fonctionne sur la base de l'équation de Mifflin St. Jeor, considérée comme la « référence » en matière de calculateurs de calories. ",
+                                       "On commence par calculer le taux métabolique de base (BMR) ou les calories que votre corps brûle simplement en étant en vie. "),
+                                     tags$li("Pour les hommes : 10 x poids (kg) + 6,25 x taille (cm) – 5 x âge (y) + 5 (kcal/jour) "),
+                                     tags$li("Pour les femmes : 10 x poids (kg) + 6,25 x taille (cm) – 5 x âge (y) -161 (kcal/jour) "),
+                                     p("Ensuite, ce nombre BMR est multiplié, en fonction de votre niveau d'activité : "),
+                                             tags$li("Sédentaire = 1,2 "),
+                                             tags$li("Peu actif = 1,375 "),
+                                             tags$li("Modérément actif = 1,550 "),
+                                             tags$li("Très actif = 1,725 "),
+                                             tags$li("Très actif = 1,9 "),
+                                     p("Le nombre de calories est ensuite ajusté en fonction de votre objectif : "),
+                                             tags$li("Perte de poids : Réduire de 10 à 20 % "),
+                                             tags$li("Gain de poids : Augmenter de 10 à 20 % "),
+                                             tags$li("Maintien du poids : Inchangé "),
+                                     p("Ce nombre de calories est divisé en pourcentages de macronutriments basés sur les répartitions communément recommandées pour le gain musculaire, la perte de poids et le maintien du poids. ",
+                                       "Ces grammes quotidiens de chaque « macro » proviennent de l’application de ces pourcentages à votre nombre quotidien de calories. ",
+                                       "Pour information, chaque gramme d'un macronutriment « vaut » un certain nombre de calories : "),
+                                     tags$ul(tags$li("Protéines : 4 calories "),
+                                             tags$li("Glucides : 4 calories "),
+                                             tags$li("Lipides : 9 calories "))
+                                     )
+                        )
+                      )
+             ))
+             ),
+
     tabPanel("Sources",
              h2("\ud83d\udcd8 Sources"),
              tags$div(
@@ -116,90 +238,14 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                )
              )
     )
-  )
+    )
 
 # Server
 server <- function(input, output, session) {
   
-  ##########################  
-  ######## ONGLET 1 ########
-  ##########################  
-  
-  # Créer un tableau réactif pour stocker les données saisies
-  table_reactif1RM <- reactiveVal(data.frame(Mouvement = mouvements, RM = rep(0, length(mouvements))))
-  
-  # Afficher le tableau éditable
-  output$table_1rm <- renderDT({
-    datatable(
-      table_reactif1RM(),
-      editable = TRUE,
-      options = list(
-        dom = 't',
-        paging = FALSE,
-        ordering = FALSE,
-        columnDefs = list(
-          list(targets = 1,
-               type = 'num',
-               validator = JS("function(value, settings) {
-                              if (value <= 0 || value === 'null') {
-                                return 'Veuillez entrer une valeur numérique positive.';
-                              } else {
-                                return '';
-                              }
-                            }"))
-        )
-      )
-    )
-  }, server = FALSE)
-  
-  # Mettre à jour le tableau réactif lorsque l'utilisateur modifie le tableau éditable
-  observeEvent(input$table_1rm_cell_edit, {
-    info <- input$table_1rm_cell_edit
-    table_modifiee <- isolate(table_reactif1RM())
-    if (info$col == 2 && info$value > 0) {
-      table_modifiee[info$row, info$col] <- info$value
-      table_reactif1RM(table_modifiee)
-    } else if (info$col == 2) {
-      showNotification("Veuillez entrer une valeur numérique positive.", type = "error")
-    }
-  }) 
-  
-  # Calculer la 1RM théorique
-  output$resultat_1rm <- renderPrint({
-    req(input$charge, input$repetitions)
-    
-    pdc <- ifelse(is.na(input$poids_corps), 0, input$poids_corps)
-    
-    if (input$repetitions >= 2 & input$repetitions <= 6) {
-      rm_theorique <- round((input$charge + pdc) / (1.0278 - (0.0278 * input$repetitions)) - pdc,2)
-      cat("MAX THÉORIQUE :", rm_theorique, "kg\n")
-    } else {
-      cat("La formule n'est pas précise pour ce nombre de répétitions.")
-    }
-  })
-  
-  observeEvent(input$calculer_1rm, {
-    output$resultat_1rm
-  })
-  
-  rm_values <- reactive({
-    table_reactif1RM()
-  })
-  
   ##########################
   ######## ONGLET 2 ########
   ##########################
-
-  # Epley : intensite / (1 + 0.033 * nReps) * 1RM
-  calculate_load <- function(mouvement, repetitions, intensite) {
-    rm_values <- table_reactif1RM()
-    load <- rm_values$RM[rm_values$Mouvement == mouvement]
-    intensite <- as.numeric(intensite)
-    repetitions <- as.numeric(repetitions)
-    charge <- (intensite / (1 + 0.033 * repetitions)) * load
-    print(paste0("Calcul de la charge pour ", mouvement, " : ", charge))
-    return(round(charge, 2))
-  }
   
   # Créer une liste réactive pour stocker les données des exercices
   exercices <- reactiveValues()
@@ -208,25 +254,10 @@ server <- function(input, output, session) {
   exercices[[as.character(1)]] <- list(list(
     mouvement = "Squat",
     muscle = "Jambes",
-    intensite = 0.75,
     series = 3,
-    repetitions = 8,
-    RPE = 7
+    repetitions_min = 6,
+    repetitions_max = 8
   ))
-  
-  # Fonction réactive pour calculer la charge
-  charge_react <- reactive({
-    seance <- input$seance_select
-    if (!is.null(exercices[[as.character(seance)]])) {
-      lapply(seq_len(length(exercices[[as.character(seance)]])), function(j) {
-        mouvement <- input[[paste0("mouvement_", seance, "_", j)]]
-        intensite <- input[[paste0("intensite_", seance, "_", j)]]
-        repetitions <- input[[paste0("repetitions_", seance, "_", j)]]
-        charge <- calculate_load(mouvement, repetitions, intensite)
-        return(charge)
-      })
-    }
-  })
   
   # Observer pour ajouter des exercices
   observeEvent(input$ajouter_ligne, {
@@ -241,22 +272,21 @@ server <- function(input, output, session) {
       list(
         mouvement = input[[paste0("mouvement_", seance, "_", j)]],
         muscle = input[[paste0("muscle_", seance, "_", j)]],
-        intensite = input[[paste0("intensite_", seance, "_", j)]],
         series = input[[paste0("series_", seance, "_", j)]],
-        repetitions = input[[paste0("repetitions_", seance, "_", j)]],
-        RPE = input[[paste0("RPE_", seance, "_", j)]]
+        repetitions_min = input[[paste0("repetitions_", seance, "_", j)]][1],
+        repetitions_max = input[[paste0("repetitions_", seance, "_", j)]][2]
       )
     })
+    
     
     # Ajouter le nouvel exercice à la liste
     exercices[[seance]] <- c(valeurs_exercices_existants, list(list(
       mouvement = "",
       muscle = "",
-      intensite = 0.75,
       series = 3,
-      repetitions = 8,
-      RPE = 7
-    )))
+      repetitions_min = 6,
+      repetitions_max = 8
+      )))
     
     # Vérifier si input$seances_par_semaine est NULL avant d'utiliser seq_len()
     if (!is.null(input$seances_par_semaine)) {
@@ -267,12 +297,9 @@ server <- function(input, output, session) {
             fluidRow(
               column(2, selectInput(paste0("mouvement_", seance, "_", j), "Mouvement:", mouvements, selected = exercices[[seance]][[j]]$mouvement)),
               column(2, selectInput(paste0("muscle_", seance, "_", j), "Muscle ciblé:", muscles, selected = exercices[[seance]][[j]]$muscle)),
-              column(2, sliderInput(paste0("intensite_", seance, "_", j), "Intensité:", min = 0.5, max = 1.0, value = exercices[[seance]][[j]]$intensite, step = 0.05)),
               column(2, sliderInput(paste0("series_", seance, "_", j), "Nombre de séries:", min = 1, max = 10, value = exercices[[seance]][[j]]$series)),
-              column(2, sliderInput(paste0("repetitions_", seance, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = exercices[[seance]][[j]]$repetitions)),
-              column(2, sliderInput(paste0("RPE_", seance, "_", j), "RPE:", min = 5, max = 10, value = exercices[[seance]][[j]]$RPE)),
-              column(2, div(textOutput(paste0("charge_", seance, "_", j))))
-            )
+              column(2, sliderInput(paste0("repetitions_", seance, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(exercices[[seance]][[j]]$repetitions_min, exercices[[seance]][[j]]$repetitions_max)))
+              )
           })
         )
       })
@@ -290,10 +317,9 @@ server <- function(input, output, session) {
         list(
           mouvement = input[[paste0("mouvement_", seance, "_", j)]],
           muscle = input[[paste0("muscle_", seance, "_", j)]],
-          intensite = input[[paste0("intensite_", seance, "_", j)]],
           series = input[[paste0("series_", seance, "_", j)]],
-          repetitions = input[[paste0("repetitions_", seance, "_", j)]],
-          RPE = input[[paste0("RPE_", seance, "_", j)]]
+          repetitions_min = input[[paste0("repetitions_", seance, "_", j)]][1],
+          repetitions_max = input[[paste0("repetitions_", seance, "_", j)]][2]
         )
       })
       
@@ -304,11 +330,8 @@ server <- function(input, output, session) {
             fluidRow(
               column(2, selectInput(paste0("mouvement_", seance, "_", j), "Mouvement:", mouvements, selected = ifelse(is.null(input$seance_select), NULL, req(valeurs_exercices_existants[[j]]$mouvement)))),
               column(2, selectInput(paste0("muscle_", seance, "_", j), "Muscle ciblé:", muscles, selected = ifelse(is.null(input$seance_select), NULL, req(valeurs_exercices_existants[[j]]$muscle)))),
-              column(2, sliderInput(paste0("intensite_", seance, "_", j), "Intensité:", min = 0.5, max = 1.0, value = ifelse(is.null(input$seance_select), NULL, req(valeurs_exercices_existants[[j]]$intensite)), step = 0.05)),
               column(2, sliderInput(paste0("series_", seance, "_", j), "Nombre de séries:", min = 1, max = 10, value = ifelse(is.null(input$seance_select), NULL, req(valeurs_exercices_existants[[j]]$series)))),
-              column(2, sliderInput(paste0("repetitions_", seance, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = ifelse(is.null(input$seance_select), NULL, req(valeurs_exercices_existants[[j]]$repetitions)))),
-              column(2, sliderInput(paste0("RPE_", seance, "_", j), "RPE:", min = 5, max = 10, value = ifelse(is.null(input$seance_select), NULL, req(valeurs_exercices_existants[[j]]$RPE)))),
-              column(2, div(textOutput(paste0("charge_", seance, "_", j))))
+              column(2, sliderInput(paste0("repetitions_", seance, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(exercices[[seance]][[j]]$repetitions_min, exercices[[seance]][[j]]$repetitions_max)))
             )
           })
         )
@@ -317,10 +340,8 @@ server <- function(input, output, session) {
         for (j in seq_along(valeurs_exercices_existants)) {
           updateSelectInput(session, paste0("mouvement_", seance, "_", j), selected = valeurs_exercices_existants[[j]]$mouvement)
           updateSelectInput(session, paste0("muscle_", seance, "_", j), selected = valeurs_exercices_existants[[j]]$muscle)
-          updateSliderInput(session, paste0("intensite_", seance, "_", j), value = valeurs_exercices_existants[[j]]$intensite)
           updateSliderInput(session, paste0("series_", seance, "_", j), value = valeurs_exercices_existants[[j]]$series)
-          updateSliderInput(session, paste0("repetitions_", seance, "_", j), value = valeurs_exercices_existants[[j]]$repetitions)
-          updateSliderInput(session, paste0("RPE_", seance, "_", j), value = valeurs_exercices_existants[[j]]$RPE)
+          updateSliderInput(session, paste0("repetitions_", seance, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(exercices[[seance]][[j]]$repetitions_min, exercices[[seance]][[j]]$repetitions_max))
         }
       })
     }
@@ -348,7 +369,7 @@ server <- function(input, output, session) {
   output$sous_onglets <- renderUI({
     if (!is.null(input$seances_par_semaine) && input$seances_par_semaine > 0) {
       tab_list <- lapply(seq_len(input$seances_par_semaine), function(i) {
-        tabPanel(paste("Séance", i), value = paste0("sous_onglet_", i), width = "100%",
+        tabPanel(paste("Séance", i), value = paste0("sous_onglet_", i),
                  uiOutput(paste0("exercices_ui_", i))
         )
       })
@@ -372,10 +393,9 @@ server <- function(input, output, session) {
         exercices[[as.character(i)]] <- list(list(
           mouvement = "Squat",
           muscle = "Jambes",
-          intensite = 0.75,
           series = 3,
-          repetitions = 8,
-          RPE = 7
+          repetitions_min = 6,
+          repetitions_max = 8
         ))
       }
       
@@ -385,49 +405,14 @@ server <- function(input, output, session) {
             fluidRow(
               column(2, selectInput(paste0("mouvement_", i, "_", j), "Mouvement:", mouvements, selected = exercices[[as.character(i)]][[j]]$mouvement)),
               column(2, selectInput(paste0("muscle_", i, "_", j), "Muscle ciblé:", muscles, selected = exercices[[as.character(i)]][[j]]$muscle)),
-              column(2, sliderInput(paste0("intensite_", i, "_", j), "Intensité:", min = 0.5, max = 1.0, value = exercices[[as.character(i)]][[j]]$intensite, step = 0.05)),
               column(2, sliderInput(paste0("series_", i, "_", j), "Nombre de séries:", min = 1, max = 10, value = exercices[[as.character(i)]][[j]]$series)),
-              column(2, sliderInput(paste0("repetitions_", i, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = exercices[[as.character(i)]][[j]]$repetitions)),
-              column(2, sliderInput(paste0("RPE_", i, "_", j), "RPE:", min = 5, max = 10, value = exercices[[as.character(i)]][[j]]$RPE)),
-              column(2, div(textOutput(paste0("charge_", i, "_", j))))
-            )
+              column(2, sliderInput(paste0("repetitions_", i, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(exercices[[as.character(i)]][[j]]$repetitions_min, exercices[[as.character(i)]][[j]]$repetitions_max))))
           })
         )
       })
     })
   })
   
-  # Observer pour calculer la charge en fonction des données de 1RM
-  observe({
-    req(input$seances_par_semaine)
-    
-    seances <- as.integer(input$seances_par_semaine)
-    
-    if (is.na(seances) || seances <= 0) {
-      return()
-    }
-    
-    lapply(seq_len(input$seances_par_semaine), function(i) {
-      lapply(seq_len(ifelse(is.null(exercices[[as.character(i)]]), 0, length(exercices[[as.character(i)]]))), function(j) {
-        observeEvent(c(paste0("intensite_", i, "_", j), paste0("repetitions_", i, "_", j), paste0("mouvement_", i, "_", j)), {
-          intensite <- input[[paste0("intensite_", i, "_", j)]]
-          repetitions <- input[[paste0("repetitions_", i, "_", j)]]
-          mouvement <- input[[paste0("mouvement_", i, "_", j)]]
-          
-          # Calculer la charge en fonction des données de 1RM
-          charge <- calculate_load(mouvement, repetitions, intensite)
-          
-          # Mettre à jour la sortie textOutput avec la nouvelle charge
-          output[[paste0("charge_", i, "_", j)]] <- renderText({
-            validate(
-              need(charge > 0, "La charge n'a pas pu être calculée.")
-            )
-            paste("Charge :", charge, "kg")
-          })
-        })
-      })
-    })
-  })
 
   ##########################  
   ######## ONGLET 3 ########
@@ -517,77 +502,33 @@ server <- function(input, output, session) {
     tonnage <- set * rep * kg
     paste("Tonnage total :", tonnage, "kg")
   })
-  
-  # Create a reactive expression for the extrapolation
-  extrapolated_rm_values <- reactive({
-    req(input$extrapolation)
-    
-    # Calculate the extrapolation
-    extrapolation_factor <- 1 + (0.02 * input$extrapolation)
-    extrapolated_values <- data.frame(
-      Mouvement = rm_values()$Mouvement,
-      RM_Initial = rm_values()$RM,
-      RM_Extrapolated = rm_values()$RM * extrapolation_factor
+
+  observe({
+    addTooltip(session, id = "moins_de_5_ans",
+               title = "pour l'hypertrophie, il est conseillé de réaliser entre 10 et 20 séries par groupe musculaire par semaine",
+               trigger = "hover")
+    addTooltip(session, id = "plus_de_5_ans",
+               title = "pour l'hypertrophie, il est conseillé de réaliser entre 5 et 15 séries par groupe musculaire par semaine",
+               trigger = "hover"
     )
-    
-    return(extrapolated_values)
   })
   
-  # Create a reactive expression for the extrapolation
-  extrapolated_rm_values <- reactive({
-    req(input$extrapolation, input$force_extrapolation)
+  # Calculer la 1RM théorique
+  output$resultat_1rm <- renderPrint({
+    req(input$charge, input$repetitions)
     
-    # Calculate the extrapolation
-    extrapolation_factor <- 1 + ((0.02 * input$extrapolation) * input$force_extrapolation)
-    extrapolated_values <- data.frame(
-      Mouvement = rm_values()$Mouvement,
-      RM_Initial = rm_values()$RM,
-      RM_Extrapolated = rm_values()$RM * extrapolation_factor
-    )
+    pdc <- ifelse(is.na(input$poids_corps), 0, input$poids_corps)
     
-    return(extrapolated_values)
+    if (input$repetitions >= 2 & input$repetitions <= 6) {
+      rm_theorique <- round((input$charge + pdc) / (1.0278 - (0.0278 * input$repetitions)) - pdc,2)
+      cat("Charge maximale théorique :", rm_theorique, "kg\n")
+    } else {
+      cat("La formule n'est pas précise pour ce nombre de répétitions.")
+    }
   })
   
-  # Update the plot when the input duration or force_extrapolation changes
-  observeEvent({
-    input$extrapolation
-    input$force_extrapolation
-  }, {
-    # Create the Plotly plot
-    plot_data <- extrapolated_rm_values()
-    plot_data <- plot_data[plot_data$Mouvement != "Renfo", ]
-    
-    p <- plot_ly(
-      data = plot_data,
-      x = ~Mouvement,
-      y = ~RM_Initial,
-      type = 'bar',
-      name = 'RM Initial',
-      marker = list(color = 'rgba(0, 127, 127, 0.6)')
-    )
-    
-    p <- add_trace(
-      p,
-      data = plot_data,
-      x = ~Mouvement,
-      y = ~RM_Extrapolated,
-      type = 'bar',
-      name = 'RM Extrapolated',
-      marker = list(color = 'rgba(153, 50, 204, 0.6)')
-    )
-    
-    # Ajoutez des titres et des étiquettes
-    p <- layout(
-      p,
-      title = "Extrapolation de la 1RM selon la durée du bloc",
-      xaxis = list(title = "Mouvement"),
-      yaxis = list(title = "1RM (kg)"),
-      barmode = 'group',
-      legend = list(title = list(text = "Type de RM")),
-      showlegend = TRUE
-    )
-    
-    output$strong_extrapolation_plot <- renderPlotly(p)
+  observeEvent(input$calculer_1rm, {
+    output$resultat_1rm
   })
   
   ##########################  
@@ -676,6 +617,148 @@ server <- function(input, output, session) {
       tags$li(x)
     }))
     tags$ul(exercices_muscle_html)
+  })
+  
+  # Fonction pour générer un histogramme
+  generate_histogram <- function(data, level, color, title) {
+    histogram_data <- table(data[[level]])
+    sorted_names <- sort(names(histogram_data))
+    
+    plot_ly(
+      x = sorted_names,
+      y = histogram_data[sorted_names],
+      type = "bar",
+      marker = list(color = color)
+    ) %>%
+      layout(
+        yaxis = list(title = "Nombre d'aliments"),
+        title = title
+      )
+  }
+  
+  # Histogramme pour le nombre d'alments
+  output$histogram_data <- renderPlotly({
+    color_data <- input$hist_color_data
+    level <- switch(input$group_level,
+                    "Groupes" = "alim_grp_nom_fr",
+                    "Sous-groupes" = "alim_ssgrp_nom_fr",
+                    "Sous-sous-groupes" = "alim_ssssgrp_nom_fr")
+    
+    generate_histogram(data, level, color_data, input$hist_title_data)
+  })
+  
+  # Histogrammes pour les taux de protéines, glucides et lipides
+  generate_nutrient_histogram <- function(nutrient, level, color) {
+    nutrient_column <- switch(nutrient,
+                              "proteines" = "Protéines..N.x.6.25..g.100.g.",
+                              "glucides" = "Glucides..g.100.g.",
+                              "lipides" = "Lipides..g.100.g.")
+    
+    histogram_data <- data %>%
+      group_by(.data[[level]]) %>%
+      summarize(mean = mean(.data[[nutrient_column]], na.rm = TRUE))
+    
+    plot_ly(
+      data = histogram_data,
+      x = ~.data[[level]],
+      y = ~mean,
+      type = "bar",
+      marker = list(color = color)
+    ) %>%
+      layout(
+        xaxis = list(title = ""),
+        yaxis = list(title = paste("Taux moyen de", nutrient, "pour 100g")),
+        title = paste("Distribution des", nutrient)
+      )
+  }
+  
+  output$histogram <- renderPlotly({
+    generate_nutrient_histogram(input$nutrient, input$select_level, input$hist_color)
+  })
+  
+  output$corr_Heatmap <- renderPlotly({
+    # Conversion des données en une matrice
+    M <- as.matrix(data[, 10:76])
+    
+    # Calcul de la matrice de corrélation
+    R <- cor(M)
+    
+    # Attribution de noms de lignes et de colonnes à la matrice
+    rownames(R) <- as.character(seq(10, 76, 1))
+    colnames(R) <- as.character(seq(10, 76, 1))
+    
+    # Filtrage de la matrice pour exclure certaines colonnes et lignes
+    indices_to_exclude <- c(10, 11, 12, 14, 15, 24, 29, 30, 33, 35, 37:67)
+    R_filtered <- R[-indices_to_exclude, -indices_to_exclude]
+    
+    # Définition de la palette de couleurs pour la heatmap
+    col <- colorRampPalette(c("blue", "white", "red"))(20)
+    
+    # Création de la heatmap avec plotly
+    plot_ly(
+      x = rownames(R_filtered),
+      y = colnames(R_filtered),
+      z = R_filtered,
+      type = "heatmap",
+      colors = col,
+      hoverinfo = "x+y+z"
+    ) %>%
+      layout(
+        title = "Matrice de corrélation",
+        xaxis = list(title = "", tickangle = 45),
+        yaxis = list(title = "")
+      )
+  })
+  
+  output$corresponding_name <- renderText({
+    # Récupération des noms des colonnes
+    col_names <- colnames(data)[10:76]
+    # Trouver le nom correspondant au numéro sélectionné
+    selected_number <- as.numeric(input$number)
+    corresponding_name <- col_names[selected_number - 9]
+    paste("Le numéro", input$number, "correspond à :", corresponding_name)
+  })
+  
+  # Ajout des explications de corrélation (positif et négatif)
+  observe({
+    addTooltip(session, id = "correlation_interpretation_p",
+            title = "Les Lipides (n°18) sont corrélés positivement avec les AG saturés (n°32),
+            AG monoinsaturés (n°32), et AG polyinsaturés (n°34),
+            mais aussi avec les acides oléiques (n°43) et palmitiques (n°41).",
+            trigger = "hover")
+    addTooltip(session, id = "correlation_interpretation_n",
+            title = "L'Eau (n°14) est corrélée négativement avec notamment l'énergie (n°10:13), 
+            les Glucides (n°17) et les Lipides (n°18).",
+            trigger = "hover")
+  })
+  
+  observeEvent(input$calculate, {
+    # Calcul du métabolisme de base (BMR) en utilisant l'équation de Mifflin-St Jeor
+    bmr <- if (input$sex == "Homme") {
+      10 * input$weight + 6.25 * input$height - 5 * input$age + 5
+    } else {
+      10 * input$weight + 6.25 * input$height - 5 * input$age - 161
+    }
+    
+    # Calcul du besoin calorique total (TDEE)
+    tdee <- bmr * as.numeric(input$activity)
+    
+    # Ajustement des calories en fonction de l'objectif
+    calories <- switch(input$goal,
+                       "weight_loss" = tdee * 0.90, # -10%
+                       "maintenance" = tdee,
+                       "muscle_gain" = tdee + tdee * 0.10) # +10%
+    
+    # Distribution des macronutriments
+    protein <- input$weight * 2.2  # en grammes, 1g par livre de poids corporel
+    fat <- calories * 0.25 / 9  # 25% des calories proviennent des graisses
+    carbs <- (calories - (protein * 4 + fat * 9)) / 4  # le reste des calories provient des glucides
+    
+    # Affichage des résultats
+    output$calories <- renderText(paste("Calories journalières : ", round(calories), " kcal"))
+    output$protein <- renderText(paste("Protéines : ", round(protein), " g"))
+    output$fat <- renderText(paste("Lipides : ", round(fat), " g"))
+    output$carbs <- renderText(paste("Glucides : ", round(carbs), " g"))
   })
   
 }
