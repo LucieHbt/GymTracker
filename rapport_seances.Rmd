@@ -1,0 +1,54 @@
+---
+title: "Structure_Seances"
+output:
+  pdf_document:
+    extra_dependencies: ["booktabs"] # Ajouter le package booktabs
+date: "2024-05-31"
+params:
+  exercices: NULL
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(shiny)
+library(knitr)
+library(kableExtra)
+
+# Vérifier si les exercices sont bien passés en paramètres
+if (is.null(params$exercices)) {
+  stop("Les paramètres des exercices sont absents")
+}
+
+# Fonction pour afficher les exercices d'une séance sous forme de tableau
+afficher_exercices <- function(seance, exercices) {
+  cat(paste0("### Séance ", seance, "\n\n"))
+
+  # Créer un dataframe pour les exercices
+  exercices_df <- data.frame(
+    Exercice = paste0("Exercice ", seq_along(exercices)),
+    Mouvement = sapply(exercices, function(x) x$mouvement),
+    Muscle = sapply(exercices, function(x) x$muscle),
+    Séries = sapply(exercices, function(x) x$series),
+    Répétitions = sapply(exercices, function(x) paste0(x$repetitions_min, " - ", x$repetitions_max))
+  )
+
+  # Afficher le tableau en format PDF avec kable et kable_styling
+  print(kable(exercices_df, format = "latex", booktabs = TRUE, linesep = "") %>%
+          kable_styling())
+}
+
+# Afficher les exercices pour chaque séance
+```{r, results='asis'}
+for (seance in names(params$exercices)) {
+  if (seance != "series_summary_par_semaine") {
+    afficher_exercices(seance, params$exercices[[seance]])
+  }
+}
+
+# Afficher le résumé des séries par semaine si présent
+if ("series_summary_par_semaine" %in% names(params$exercices)) {
+  cat("## Résumé des séries par semaine\n\n")
+  summary_df <- params$exercices$series_summary_par_semaine
+  print(kable(summary_df, format = "latex", booktabs = TRUE, linesep = "") %>%
+          kable_styling())
+}

@@ -10,6 +10,8 @@ library(plotly)
 library(colourpicker)
 library(corrplot)
 library(reshape2)
+library(tinytex)
+library(kableExtra)
 
 data <- read.csv(
   file = "Table_Ciqual_2020_FR_2020_07_07.csv",
@@ -21,13 +23,14 @@ data <- read.csv(
 # Définir les listes prédéfinies
 mouvements <- c("Muscle up", "Squat", "Pull Up", "Dips", "Bench", "Deadlift", "Renfo")
 muscles <- c("Pectoraux","Abdominaux", "Trapèzes", "Dorsaux", "Epaules", "Quadriceps", "Ischio-jambiers", "Fessiers", "Mollets", "Bras")
+activity_levels <- c("Sédentaire", "Activité légère", "Activité modérée", "Activité intense", "Activité très intense")
 
 ui <- fluidPage(theme = shinytheme("cyborg"),
                 shinythemes::themeSelector(),
                 navbarPage("Gym Tracker",
                            
                            tabPanel("Présentation",
-                                    sidebarPanel(
+                                    mainPanel(width = 4,
                                       h4("Bienvenue dans Gym Tracker"),
                                       p("Cette application vous aide à suivre et à planifier vos séances d'entraînement."),
                                       h4("Fonctionnalités"),
@@ -47,6 +50,11 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                         tags$li("Nutrition : Obtenez les bases de la nutrition sportive."),
                                         tags$li("Sources : Consultez les références utilisées.")
                                       )
+                                    ),
+                                    sidebarPanel(width = 8,
+                                      tags$figure(
+                                        img(src = "PyramidesHelms.jpg", height = "auto", width = "100%"),
+                                        tags$figcaption("Crédit image : The Muscle and Strength Pyramids: nutrition and training. (2023). https://muscleandstrengthpyramids.com/"))
                                     )
                            ),
     
@@ -58,7 +66,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                actionButton("ajouter_ligne", "Ajouter un exercice", icon = icon("plus")),
                actionButton("supprimer_ligne", "Supprimer un exercice", icon = icon("minus")),
                plotlyOutput("set_pie_chart"),
-               actionButton("export_pdf", "Exporter en PDF")
+               downloadButton("downloadPdf", "Télécharger le PDF")
              ),
              mainPanel(width = 8,
                titlePanel("Editez vos séances"),
@@ -72,17 +80,20 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                tabsetPanel(
                  tabPanel("Volume",
                           fluidRow(
-                            sidebarPanel(width = 6, 
-                                         plotlyOutput("general_muscles_plot")),
+                            sidebarPanel(width = 6,
+                                         tags$figure(
+                                           img(src = "rep.jpeg", height = "auto", width = "100%"),
+                                           tags$figcaption("Crédit image : Ghaïs \"Geek'n'Fit\" Guelaïa, Combien de reps pour quels objectifs ?, panodyssey.com."))
+                            ),
                             sidebarPanel(width = 6,
                                          h4("Combien de séries par groupes musculaires ?"),
-                                         actionButton(inputId = "moins_de_5_ans", label = "Moins de 5 ans d'expérience"),
-                                         actionButton(inputId = "plus_de_5_ans", label = "Plus de 5 ans d'expérience"),
-                                         bsTooltip(id = "moins_de_5_ans",
+                                         actionButton(inputId = "dev", label = "Pour developper"),
+                                         actionButton(inputId = "maintien", label = "Pour maintenir"),
+                                         bsTooltip(id = "dev",
                                                    title = "Pour developper la qualité voulue, il est conseillé de réaliser entre 10 et 20 séries par groupe musculaire par semaine",
                                                    trigger = "hover"),
-                                         bsTooltip(id = "plus_de_5_ans",
-                                                   title = "Pour developper la qualité voulue, il est conseillé de réaliser entre 5 et 15 séries par groupe musculaire par semaine",
+                                         bsTooltip(id = "maintien",
+                                                   title = "Pour maintenir la qualité voulue, il est conseillé de réaliser entre 3 et 5 séries par groupe musculaire par semaine",
                                                    trigger = "hover")
                                          )
                             )
@@ -111,24 +122,20 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                  tabPanel("Renforcement",
                           mainPanel(
                               tabPanel("Force",
-                                       sidebarPanel(width = 6,
+                                       sidebarPanel(width = 8,
                                                     h4("Force"),
                                                     selectInput("mouvement", "Choisir un mouvement :",
                                                                 choices = c("Muscle up", "Squat", "Pull Up", "Dips", "Bench", "Deadlift")),
                                                     tableOutput("exercice"),
                                                     tableOutput("muscles_cibles")
                                                     ),
-                                       sidebarPanel(width = 6,
+                                       sidebarPanel(width = 8,
                                                     h4("Muscle"),
                                                     selectInput("muscle", "Choisir un muscle :",
                                                                 choices = muscles),
                                                     tableOutput("exercices_muscle")
-                                                    ),
-                                       sidebarPanel(width = 4,
-                                                    h4("Course à pied"),
-                                                    tableOutput("exercices_course")
+                                                    )
                                        
-                              )
                             )
                           )
                  )
@@ -140,14 +147,36 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
              mainPanel(
                titlePanel("Quelques bases"),
                tabsetPanel(
+                 tabPanel("Balance énergétique",
+                          fluidRow(
+                            sidebarPanel(width = 4,
+                                         selectInput("sex", "Sexe", choices = c("Homme", "Femme")),
+                                         numericInput("age", "Âge (années)", value = 25, min = 0),
+                                         numericInput("weight", "Poids (kg)", value = 70, min = 0),
+                                         numericInput("height", "Taille (cm)", value = 175, min = 0),
+                                         selectInput("activity", "Niveau d'activité physique",
+                                                     choices = list("Sédentaire" = 1.2, 
+                                                                    "Activité légère" = 1.375, 
+                                                                    "Activité modérée" = 1.55, 
+                                                                    "Activité intense" = 1.725, 
+                                                                    "Activité très intense" = 1.9),
+                                                     selected = "Sédentaire"),
+                                         textOutput("mb_result"),
+                                         textOutput("bcj_result")
+                            ),
+                            mainPanel(
+                              plotlyOutput("energy_plot"),
+                              plotlyOutput("macro_plot")
+                            )
+                          )
+                 ),
                tabPanel("Macronutriments",
                  sidebarPanel(
                    selectInput(inputId = "nutrient", label = "Sélectionner le nutriment :", 
                                choices = c("Protéines" = "proteines", "Glucides" = "glucides", "Lipides" = "lipides")),
                    radioButtons(inputId = "select_level", label = "Sélectionner le niveau : ",
-                                choices = c("Groupes" = "alim_grp_nom_fr",
-                                            "Sous-groupes" = "alim_ssgrp_nom_fr",
-                                            "Sous-sous-groupes" = "alim_ssssgrp_nom_fr")),
+                                choices = c("Groupes" = "alim_ssgrp_nom_fr",
+                                            "Sous-groupes" = "alim_ssssgrp_nom_fr")),
                    colourInput(inputId = "hist_color", label = "Choisir une couleur", value = "#C43413")
                  ),
                  mainPanel(
@@ -174,59 +203,6 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                         )
                         )
                         ),
-             tabPanel("Et moi ?",
-                      fluidRow(
-                        sidebarPanel(
-                          numericInput("age", "Âge", value = 25, min = 0),
-                          selectInput("sex", "Sexe", choices = c("Homme", "Femme")),
-                          numericInput("weight", "Poids (kg)", value = 70, min = 0),
-                          numericInput("height", "Taille (cm)", value = 175, min = 0),
-                          selectInput("activity", "Niveau d'activité", choices = c(
-                            "Sédentaire (Peu ou pas d'exercice)" = 1.2,
-                            "Légèrement actif (exercices/sports légers 3 à 5 jours par semaine)" = 1.375,
-                            "Modérément actif (exercice/sports modérés 3 à 5 jours par semaine)" = 1.55,
-                            "Très actif (exercice intense/sports 6 à 7 jours par semaine)" = 1.725,
-                            "Extra actif (exercices intenses/sports 6 à 7 jours par semaine, plus travail physique)" = 1.9
-                          )),
-                          selectInput("goal", "Objectif", choices = c(
-                            "Perte de poids" = "weight_loss",
-                            "Maintien du poids" = "maintenance",
-                            "Prise de muscle" = "muscle_gain"
-                          )),
-                          actionButton("calculate", "Calculer")
-                        ),
-                        mainPanel(
-                          h4("Résultats"),
-                          textOutput("calories"),
-                          textOutput("protein"),
-                          textOutput("fat"),
-                          textOutput("carbs")
-                          ),
-                        sidebarPanel(width = 8,
-                                     h4("Comment fonctionne le calculateur ?"),
-                                     p("Il fonctionne sur la base de l'équation de Mifflin St. Jeor, considérée comme la « référence » en matière de calculateurs de calories. ",
-                                       "On commence par calculer le taux métabolique de base (BMR) ou les calories que votre corps brûle simplement en étant en vie. "),
-                                     tags$li("Pour les hommes : 10 x poids (kg) + 6,25 x taille (cm) – 5 x âge (y) + 5 (kcal/jour) "),
-                                     tags$li("Pour les femmes : 10 x poids (kg) + 6,25 x taille (cm) – 5 x âge (y) -161 (kcal/jour) "),
-                                     p("Ensuite, ce nombre BMR est multiplié, en fonction de votre niveau d'activité : "),
-                                             tags$li("Sédentaire = 1,2 "),
-                                             tags$li("Peu actif = 1,375 "),
-                                             tags$li("Modérément actif = 1,550 "),
-                                             tags$li("Très actif = 1,725 "),
-                                             tags$li("Très actif = 1,9 "),
-                                     p("Le nombre de calories est ensuite ajusté en fonction de votre objectif : "),
-                                             tags$li("Perte de poids : Réduire de 10 à 20 % "),
-                                             tags$li("Gain de poids : Augmenter de 10 à 20 % "),
-                                             tags$li("Maintien du poids : Inchangé "),
-                                     p("Ce nombre de calories est divisé en pourcentages de macronutriments basés sur les répartitions communément recommandées pour le gain musculaire, la perte de poids et le maintien du poids. ",
-                                       "Ces grammes quotidiens de chaque « macro » proviennent de l’application de ces pourcentages à votre nombre quotidien de calories. ",
-                                       "Pour information, chaque gramme d'un macronutriment « vaut » un certain nombre de calories : "),
-                                     tags$ul(tags$li("Protéines : 4 calories "),
-                                             tags$li("Glucides : 4 calories "),
-                                             tags$li("Lipides : 9 calories "))
-                                     )
-                        )
-                      )
              ))
              ),
 
@@ -234,7 +210,10 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
              h2("\ud83d\udcd8 Sources"),
              tags$div(
                class = "well",
-               p("M. Brzycki (1993) Strength Testing-Predicting a One-Rep Max from Reps-to-Fatigue Journal of Physical Education, Recreation & Dance, 64:1, 88-90, DOI: 10.1080/07303084.1993.10606684")
+               p("M. Brzycki (1993) Strength Testing-Predicting a One-Rep Max from Reps-to-Fatigue Journal of Physical Education, Recreation & Dance, 64:1, 88-90, DOI: 10.1080/07303084.1993.10606684"),
+               p("Guelaïa, G. (2020). La pyramide de la récupération. Panodyssey. https://panodyssey.com/fr/article/sport/la-pyramide-de-la-recuperation-8hm59btufgeu"),
+               p("Guelaïa, G. (2020). Combien de reps pour quels objectifs ? Panodyssey. https://panodyssey.com/fr/article/sport/combien-de-reps-pour-quels-objectifs-q95m2wmukppb")
+               
                )
              )
     )
@@ -413,7 +392,26 @@ server <- function(input, output, session) {
     })
   })
   
-
+  output$downloadPdf <- downloadHandler(
+    filename = function() {
+      paste("Structure_Seances", Sys.Date(), ".pdf", sep = "")
+    },
+    content = function(file) {
+      tempReport <- file.path(tempdir(), "rapport_seances.Rmd")
+      file.copy("rapport_seances.Rmd", tempReport, overwrite = TRUE)
+      
+      # Récupérer les données des exercices depuis la liste réactive
+      exercices_data <- reactiveValuesToList(exercices)
+      
+      # Vérifier la structure des données des exercices
+      print(str(exercices_data))
+      
+      params <- list(exercices = exercices_data)  # Passer les données des exercices mises à jour
+      
+      rmarkdown::render(tempReport, output_file = file, params = params, envir = new.env(parent = globalenv()))
+    }
+  )
+  
   ##########################  
   ######## ONGLET 3 ########
   ##########################
@@ -470,29 +468,6 @@ server <- function(input, output, session) {
     }
   })
   
-  output$general_muscles_plot <- renderPlotly({
-    # Créez un data frame avec les données
-    data <- data.frame(
-      Type = c("Force", "Hypertrophie", "Endurance"),
-      Min = c(1, 6, 13),
-      Max = c(5, 12, 20),
-      Max = c(5, 12, 20),
-      Color = c("lightgreen", "lightblue", "lightcoral"), 
-      DarkColor = c("darkgreen", "darkblue", "darkred") 
-    )
-    # Créez le graphique avec Plotly
-    p <- plot_ly(data, x = ~Type, y = ~Min, type = 'bar', name = 'Min', marker = list(color = ~Color))
-    p <- add_trace(p, y = ~Max, name = 'Max', marker = list(color = ~DarkColor))
-    
-    # Ajoutez des titres et des étiquettes
-    p <- layout(p,
-                title = "Gammes de Répétitions recommandées",
-                xaxis = list(title = ""),
-                yaxis = list(title = "Nombre de répétitions", range = c(0, 20)),
-                barmode = 'stack',
-                showlegend = FALSE)
-  })
-  
   # Calcul tonnage théorique
   output$result <- renderText({
     set <- input$set
@@ -504,11 +479,11 @@ server <- function(input, output, session) {
   })
 
   observe({
-    addTooltip(session, id = "moins_de_5_ans",
-               title = "pour l'hypertrophie, il est conseillé de réaliser entre 10 et 20 séries par groupe musculaire par semaine",
+    addTooltip(session, id = "dev",
+               title = "Pour maintenir la qualité voulue, il est conseillé de réaliser entre 10 et 20 séries par groupe musculaire par semaine",
                trigger = "hover")
-    addTooltip(session, id = "plus_de_5_ans",
-               title = "pour l'hypertrophie, il est conseillé de réaliser entre 5 et 15 séries par groupe musculaire par semaine",
+    addTooltip(session, id = "maintien",
+               title = "Pour maintenir la qualité voulue, il est conseillé de réaliser entre 3 et 5 séries par groupe musculaire par semaine",
                trigger = "hover"
     )
   })
@@ -565,37 +540,6 @@ server <- function(input, output, session) {
                              "Renfo" = "Aucun muscles spécifiés"
     )
     muscles_cibles
-  })
-  
-  
-  # Créer le data frame contenant les données du tableau
-  exercices_course <- data.frame(
-    stringsAsFactors = FALSE,
-    EXERCICE = c(
-      "SQUAT ( sauté, pistol, barre, haltère ou élastique )",
-      "FENTES ( tout types )",
-      "PLANCHE ( genoux, pieds )",
-      "HIP THRUST",
-      "EXTENSIONS MOLLETS ( un pied ou deux )",
-      "LEG EXTENSION",
-      "LEG CURL",
-      "SOULEVE DE TERRE ( ROUMAIN OU TRADI )"
-    ),
-    MUSCLES_CIBLES = c(
-      "QUADRICEPS / FESSIERS",
-      "ISCHIOS / FESSIERS / QUADRICEPS",
-      "ABDOS",
-      "ISCHIOS / FESSIERS",
-      "MOLLETS",
-      "QUADRICEPS",
-      "ISCHIOS",
-      "ISCHIOS / FESSIERS"
-    )
-  )
-  
-  # Définir la sortie output$exercices_course
-  output$exercices_course <- renderTable({
-    exercices_course
   })
   
   # Définir la sortie output$exercices_muscle
@@ -732,33 +676,59 @@ server <- function(input, output, session) {
             trigger = "hover")
   })
   
-  observeEvent(input$calculate, {
-    # Calcul du métabolisme de base (BMR) en utilisant l'équation de Mifflin-St Jeor
-    bmr <- if (input$sex == "Homme") {
-      10 * input$weight + 6.25 * input$height - 5 * input$age + 5
+  calculate_mb <- reactive({
+    if (input$sex == "Homme") {
+      88.362 + (13.397 * input$weight) + (4.799 * input$height) - (5.677 * input$age)
     } else {
-      10 * input$weight + 6.25 * input$height - 5 * input$age - 161
+      447.593 + (9.247 * input$weight) + (3.098 * input$height) - (4.330 * input$age)
     }
+  })
+  
+  calculate_bcj <- reactive({
+    calculate_mb() * as.numeric(input$activity)
+  })
+  
+  output$mb_result <- renderText({
+    paste("Métabolisme de base (MB) : ", round(calculate_mb(), 2), " kcal/jour")
+  })
+  
+  output$bcj_result <- renderText({
+    paste("Besoins caloriques journaliers (BCJ) : ", round(calculate_bcj(), 2), " kcal/jour")
+  })
+  
+  output$energy_plot <- renderPlotly({
+    activity_factors <- c(1.2, 1.375, 1.55, 1.725, 1.9)
+    energy_expenditure <- calculate_mb() * activity_factors
     
-    # Calcul du besoin calorique total (TDEE)
-    tdee <- bmr * as.numeric(input$activity)
+    data <- data.frame(
+      Activity = factor(activity_levels, levels = activity_levels),
+      Energy = energy_expenditure
+    )
     
-    # Ajustement des calories en fonction de l'objectif
-    calories <- switch(input$goal,
-                       "weight_loss" = tdee * 0.90, # -10%
-                       "maintenance" = tdee,
-                       "muscle_gain" = tdee + tdee * 0.10) # +10%
+    plot_ly(data, x = ~Activity, y = ~Energy, type = 'bar', text = ~round(Energy, 2), textposition = 'auto') %>%
+      layout(title = 'Dépense Énergétique Quotidienne',
+             xaxis = list(title = "Niveau d'Activité"),
+             yaxis = list(title = 'Calories (kcal)'))
+  })
+  
+  output$macro_plot <- renderPlotly({
+    bcj <- calculate_bcj()
+    macros <- c("Glucides", "Protéines", "Lipides")
+    percentages <- c(0.50, 0.20, 0.30)
+    calories <- bcj * percentages
+    grams <- c(calories[1] / 4, calories[2] / 4, calories[3] / 9)
     
-    # Distribution des macronutriments
-    protein <- input$weight * 2.2  # en grammes, 1g par livre de poids corporel
-    fat <- calories * 0.25 / 9  # 25% des calories proviennent des graisses
-    carbs <- (calories - (protein * 4 + fat * 9)) / 4  # le reste des calories provient des glucides
+    data <- data.frame(
+      Macronutrient = macros,
+      Calories = calories,
+      Grams = grams,
+      Activity = factor(activity_levels, levels = activity_levels),
+    )
     
-    # Affichage des résultats
-    output$calories <- renderText(paste("Calories journalières : ", round(calories), " kcal"))
-    output$protein <- renderText(paste("Protéines : ", round(protein), " g"))
-    output$fat <- renderText(paste("Lipides : ", round(fat), " g"))
-    output$carbs <- renderText(paste("Glucides : ", round(carbs), " g"))
+    plot_ly(data, labels = ~Macronutrient, values = ~Calories, type = 'pie', 
+            text = ~paste(round(Grams, 2), 'g'),
+            textinfo = 'label+text+percent') %>%
+      layout(title = paste('Répartition des Macronutriments :', input$activity))
   })
   
 }
