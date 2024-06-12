@@ -29,7 +29,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                 shinythemes::themeSelector(),
                 navbarPage("Gym Tracker",
                            
-                           tabPanel("Présentation",
+                           tabPanel("	\ud83c\udfaf Présentation",
                                     mainPanel(width = 4,
                                       h4("Bienvenue dans Gym Tracker"),
                                       p("Cette application vous aide à suivre et à planifier vos séances d'entraînement."),
@@ -58,7 +58,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                     )
                            ),
     
-    tabPanel("Entraînement",
+    tabPanel("	\ud83c\udfc6 Entraînement",
              sidebarPanel(
                h4("Modulez votre semaine type d'entraînement"),
                sliderInput("seances_par_semaine", "Nombre de séances par semaine:", min = 1, max = 7, value = 3),
@@ -74,11 +74,11 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                )
              ),
     
-    tabPanel("Conseils",
+    tabPanel("	\ud83c\udfcb\ufe0f\u200d\u2640 Training Pyramid",
              mainPanel(
-               titlePanel("Quelques conseils"),
+               titlePanel("	\ud83c\udfcb\ufe0f\u200d\u2640 Training Pyramid"),
                tabsetPanel(
-                 tabPanel("Volume",
+                 tabPanel("Volume/Intensité/Fréquence",
                           fluidRow(
                             sidebarPanel(width = 6,
                                          tags$figure(
@@ -98,7 +98,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                          )
                             )
                           ),
-                 tabPanel("Calculs théoriques",
+                 tabPanel("Progression",
                           fluidRow(
                             sidebarPanel(width = 6,
                                          h4("Calculateur théorique du tonnage"),
@@ -119,17 +119,17 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                             )
                           )
                  ),
-                 tabPanel("Renforcement",
+                 tabPanel("Selection d'exercices",
                           mainPanel(
                               tabPanel("Force",
-                                       sidebarPanel(width = 8,
+                                       sidebarPanel(width = 6,
                                                     h4("Force"),
                                                     selectInput("mouvement", "Choisir un mouvement :",
                                                                 choices = c("Muscle up", "Squat", "Pull Up", "Dips", "Bench", "Deadlift")),
                                                     tableOutput("exercice"),
                                                     tableOutput("muscles_cibles")
                                                     ),
-                                       sidebarPanel(width = 8,
+                                       sidebarPanel(width = 6,
                                                     h4("Muscle"),
                                                     selectInput("muscle", "Choisir un muscle :",
                                                                 choices = muscles),
@@ -143,13 +143,13 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                )
              ),
     
-    tabPanel("Nutrition",
+    tabPanel("	\ud83c\udf4e Nutrition Pyramid",
              mainPanel(
-               titlePanel("Quelques bases"),
+               titlePanel("	\ud83c\udf4e Nutrition Pyramid"),
                tabsetPanel(
                  tabPanel("Balance énergétique",
                           fluidRow(
-                            sidebarPanel(width = 4,
+                            sidebarPanel(
                                          selectInput("sex", "Sexe", choices = c("Homme", "Femme")),
                                          numericInput("age", "Âge (années)", value = 25, min = 0),
                                          numericInput("weight", "Poids (kg)", value = 70, min = 0),
@@ -165,9 +165,17 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                          textOutput("bcj_result")
                             ),
                             mainPanel(
-                              plotlyOutput("energy_plot"),
-                              plotlyOutput("macro_plot")
+                              fluidRow(
+                                column(6,
+                                       h4("Dépense Énergétique Quotidienne"),
+                                       plotlyOutput("energy_plot")
+                                ),
+                                column(6,
+                                       h4(textOutput("macro_title")),
+                                       plotlyOutput("macro_plot")
                             )
+                          )
+                          )
                           )
                  ),
                tabPanel("Macronutriments",
@@ -206,7 +214,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
              ))
              ),
 
-    tabPanel("Sources",
+    tabPanel("\ud83d\udcd8 Sources",
              h2("\ud83d\udcd8 Sources"),
              tags$div(
                class = "well",
@@ -689,11 +697,11 @@ server <- function(input, output, session) {
   })
   
   output$mb_result <- renderText({
-    paste("Métabolisme de base (MB) : ", round(calculate_mb(), 2), " kcal/jour")
+    paste("Métabolisme de base : ", round(calculate_mb(), 2), " kcal/jour")
   })
   
   output$bcj_result <- renderText({
-    paste("Besoins caloriques journaliers (BCJ) : ", round(calculate_bcj(), 2), " kcal/jour")
+    paste("Besoins caloriques journaliers : ", round(calculate_bcj(), 2), " kcal/jour")
   })
   
   output$energy_plot <- renderPlotly({
@@ -706,8 +714,8 @@ server <- function(input, output, session) {
     )
     
     plot_ly(data, x = ~Activity, y = ~Energy, type = 'bar', text = ~round(Energy, 2), textposition = 'auto') %>%
-      layout(title = 'Dépense Énergétique Quotidienne',
-             xaxis = list(title = "Niveau d'Activité"),
+      layout(title = '',
+             xaxis = list(title = ""),
              yaxis = list(title = 'Calories (kcal)'))
   })
   
@@ -721,16 +729,20 @@ server <- function(input, output, session) {
     data <- data.frame(
       Macronutrient = macros,
       Calories = calories,
-      Grams = grams,
-      Activity = factor(activity_levels, levels = activity_levels),
+      Grams = grams
     )
     
     plot_ly(data, labels = ~Macronutrient, values = ~Calories, type = 'pie', 
             text = ~paste(round(Grams, 2), 'g'),
             textinfo = 'label+text+percent') %>%
-      layout(title = paste('Répartition des Macronutriments :', input$activity))
+      layout(showlegend = FALSE)
   })
   
+  output$macro_title <- renderText({
+    activity_labels <- c("Sédentaire", "Activité légère", "Activité modérée", "Activité intense", "Activité très intense")
+    selected_activity <- activity_labels[which(c(1.2, 1.375, 1.55, 1.725, 1.9) == as.numeric(input$activity))]
+    paste("Répartition des Macronutriments :", selected_activity)
+  })
 }
 
 # Exécuter l'application Shiny
