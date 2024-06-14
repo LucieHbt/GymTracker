@@ -1,11 +1,13 @@
 ---
-title: "Structure_Seances"
+title: "Programme d'entraînement pour `r input$client_name`"
 output:
   pdf_document:
-    extra_dependencies: ["booktabs"] # Ajouter le package booktabs
-date: "2024-05-31"
+    extra_dependencies: ["booktabs"]
+date: "`r format(Sys.Date(), '%d %B %Y')`"
 params:
+  client_name: NULL
   exercices: NULL
+  mouvement: NULL
 ---
 
 ```{r setup, include=FALSE}
@@ -23,32 +25,37 @@ if (is.null(params$exercices)) {
 afficher_exercices <- function(seance, exercices) {
   cat(paste0("### Séance ", seance, "\n\n"))
 
-  # Créer un dataframe pour les exercices
-  exercices_df <- data.frame(
-    Exercice = paste0("Exercice ", seq_along(exercices)),
-    Mouvement = sapply(exercices, function(x) x$mouvement),
-    Muscle = sapply(exercices, function(x) x$muscle),
-    Séries = sapply(exercices, function(x) x$series),
-    Répétitions = sapply(exercices, function(x) paste0(x$repetitions_min, " - ", x$repetitions_max))
-  )
+  if (length(exercices) == 0) {
+    cat("Aucun exercice pour cette séance.\n\n")
+    return()
+  }
 
-  # Afficher le tableau en format PDF avec kable et kable_styling
-  print(kable(exercices_df, format = "latex", booktabs = TRUE, linesep = "") %>%
-          kable_styling())
-}
-
-# Afficher les exercices pour chaque séance
-```{r, results='asis'}
-for (seance in names(params$exercices)) {
-  if (seance != "series_summary_par_semaine") {
-    afficher_exercices(seance, params$exercices[[seance]])
+  for (i in seq_along(exercices)) {
+    cat("Exercice ", i, "\n")
+    cat("Mouvement: ", exercices[[i]]$mouvement, "\n")
+    cat("Muscle: ", exercices[[i]]$muscle, "\n")
+    cat("Séries: ", exercices[[i]]$series, "\n")
+    cat("Répétitions: ", exercices[[i]]$repetitions_min, "-", exercices[[i]]$repetitions_max, "\n\n")
   }
 }
 
-# Afficher le résumé des séries par semaine si présent
+```
+
+# Répartition des séances
+```{r echo=FALSE, results='asis'}
+for (seance in seq_along(params$exercices)) {
+  if (names(params$exercices)[seance] != "series_summary_par_semaine") {
+    afficher_exercices(seance, params$exercices[[seance]])
+  }
+}
+```
+
+# Répartition du volume d'entraînement par groupe musculaire
+```{r echo=FALSE, results='asis'}
 if ("series_summary_par_semaine" %in% names(params$exercices)) {
-  cat("## Résumé des séries par semaine\n\n")
   summary_df <- params$exercices$series_summary_par_semaine
   print(kable(summary_df, format = "latex", booktabs = TRUE, linesep = "") %>%
-          kable_styling())
+          kable_styling()
+        )
 }
+```

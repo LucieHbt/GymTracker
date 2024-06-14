@@ -32,23 +32,23 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                            tabPanel("	\ud83c\udfaf Présentation",
                                     mainPanel(width = 4,
                                       h4("Bienvenue dans Gym Tracker"),
-                                      p("Cette application vous aide à suivre et à planifier vos séances d'entraînement."),
+                                      p("Cette application vous aide à planifier vos séances d'entraînement et à suivre un plan nutritionnel."),
                                       h4("Fonctionnalités"),
                                       tags$ul(
                                         tags$li("Planifiez vos séances d'entraînement hebdomadaires."),
                                         tags$li("Ajoutez et personnalisez vos exercices."),
-                                        tags$li("Visualisez vos statistiques d'entraînement."),
                                         tags$li("Calculez vos performances théoriques."),
-                                        tags$li("Obtenez des conseils sur les exercices."),
+                                        tags$li("Informez-vous sur la répartition du volume d'entraînement."),
+                                        tags$li("Obtenez des conseils sur la selection des exercices."),
                                         tags$li("Prenez connaissance des bases de la nutrition sportive.")
                                       ),
                                       h4("Instructions"),
                                       p("Utilisez les onglets en haut pour naviguer à travers les différentes fonctionnalités de l'application."),
                                       tags$ul(
-                                        tags$li("Entraînement : Planifiez et éditez vos séances."),
-                                        tags$li("Conseils : Obtenez des recommandations d'exercices."),
-                                        tags$li("Nutrition : Obtenez les bases de la nutrition sportive."),
-                                        tags$li("Sources : Consultez les références utilisées.")
+                                        tags$li("Entraînement : planifiez et éditez vos séances."),
+                                        tags$li("Pyramide de l'entraînement : comprenez comment structurer vos séances selon vos objectifs."),
+                                        tags$li("Pyramide de la nutrition : obtenez les bases de la nutrition sportive."),
+                                        tags$li("Sources : consultez les références utilisées.")
                                       )
                                     ),
                                     sidebarPanel(width = 8,
@@ -66,6 +66,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                actionButton("ajouter_ligne", "Ajouter un exercice", icon = icon("plus")),
                actionButton("supprimer_ligne", "Supprimer un exercice", icon = icon("minus")),
                plotlyOutput("set_pie_chart"),
+               textInput("client_name", label = "Nom du pratiquant", value = "PrénomNom"),
                downloadButton("downloadPdf", "Télécharger le PDF")
              ),
              mainPanel(width = 8,
@@ -74,9 +75,9 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                )
              ),
     
-    tabPanel("	\ud83c\udfcb\ufe0f\u200d\u2640 Training Pyramid",
+    tabPanel("	\ud83c\udfcb\ufe0f\u200d\u2640 Pyramide de l'entraînement",
              mainPanel(
-               titlePanel("	\ud83c\udfcb\ufe0f\u200d\u2640 Training Pyramid"),
+               titlePanel("	\ud83c\udfcb\ufe0f\u200d\u2640 Pyramide de l'entraînement"),
                tabsetPanel(
                  tabPanel("Volume/Intensité/Fréquence",
                           fluidRow(
@@ -85,8 +86,8 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                            img(src = "rep.jpeg", height = "auto", width = "100%"),
                                            tags$figcaption("Crédit image : Ghaïs \"Geek'n'Fit\" Guelaïa, Combien de reps pour quels objectifs ?, panodyssey.com."))
                             ),
-                            sidebarPanel(width = 6,
-                                         h4("Combien de séries par groupes musculaires ?"),
+                            sidebarPanel(
+                                         h4("Combien de séries par groupe musculaire ?"),
                                          actionButton(inputId = "dev", label = "Pour developper"),
                                          actionButton(inputId = "maintien", label = "Pour maintenir"),
                                          bsTooltip(id = "dev",
@@ -94,6 +95,17 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                                    trigger = "hover"),
                                          bsTooltip(id = "maintien",
                                                    title = "Pour maintenir la qualité voulue, il est conseillé de réaliser entre 3 et 5 séries par groupe musculaire par semaine",
+                                                   trigger = "hover")
+                                         ),
+                            sidebarPanel(
+                                         h4("Combien de temps de repos entre les séries ?"),
+                                         actionButton(inputId = "poly", label = "Polyarticulaires"),
+                                         actionButton(inputId = "mono", label = "Monoarticulaires"),
+                                         bsTooltip(id = "poly",
+                                                   title = "Il est conseillé de prendre entre 3 et 5 minutes de repos entre chaque série de travail.",
+                                                   trigger = "hover"),
+                                         bsTooltip(id = "mono",
+                                                   title = "Il est conseillé de prendre entre 2 et 3 minutes de repos entre chaque série de travail",
                                                    trigger = "hover")
                                          )
                             )
@@ -143,17 +155,17 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                )
              ),
     
-    tabPanel("	\ud83c\udf4e Nutrition Pyramid",
+    tabPanel("	\ud83c\udf4e Pyramide de la nutrition",
              mainPanel(
-               titlePanel("	\ud83c\udf4e Nutrition Pyramid"),
+               titlePanel("	\ud83c\udf4e Pyramide de la nutrition"),
                tabsetPanel(
                  tabPanel("Balance énergétique",
                           fluidRow(
                             sidebarPanel(
                                          selectInput("sex", "Sexe", choices = c("Homme", "Femme")),
-                                         numericInput("age", "Âge (années)", value = 25, min = 0),
-                                         numericInput("weight", "Poids (kg)", value = 70, min = 0),
-                                         numericInput("height", "Taille (cm)", value = 175, min = 0),
+                                         numericInput("age", "Âge (années)", value = 22, min = 0),
+                                         numericInput("weight", "Poids (kg)", value = 60, min = 0),
+                                         numericInput("height", "Taille (cm)", value = 163, min = 0),
                                          selectInput("activity", "Niveau d'activité physique",
                                                      choices = list("Sédentaire" = 1.2, 
                                                                     "Activité légère" = 1.375, 
@@ -191,14 +203,14 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                    plotlyOutput("histogram", height = 600)
                  )
              ),
-             tabPanel("Corrélation",
+             tabPanel("Micronutriments",
                       fluidRow(
-                        sidebarPanel(width = 7,
-                                     plotlyOutput("corr_Heatmap"),
-                                     selectInput(inputId = "number", label = "Sélectionner un numéro :", choices = as.character(seq(10, 76, 1))),
-                                     textOutput("corresponding_name")
-                                     ),
-                        sidebarPanel(width = 5,
+                        mainPanel(width = 6,
+                          h4("Matrice de corrélation"),
+                          plotlyOutput("corr_Heatmap"),
+                                     
+                        ),
+                        sidebarPanel(width = 6,
                                      h4("Que dit ce graphique ?"),
                                      actionButton(inputId = "correlation_interpretation_p", label = "Exemple de corrélation positive "),
                                      actionButton(inputId = "correlation_interpretation_n", label = "Exemple de corrélation négative"),
@@ -207,7 +219,10 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                                trigger = "hover"),
                                      bsTooltip(id = "correlation_interpretation_n",
                                                title = "L'Eau (n°14) est corrélée négativement avec notamment l'énergie (n°10:13), les Glucides (n°17) et les Lipides (n°18).",
-                                               trigger = "hover")
+                                               trigger = "hover"),
+                                     p(""),
+                                     selectInput(inputId = "number", label = "Sélectionner un numéro :", choices = as.character(seq(10, 76, 1))),
+                                     textOutput("corresponding_name")
                         )
                         )
                         ),
@@ -219,7 +234,9 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
              tags$div(
                class = "well",
                p("M. Brzycki (1993) Strength Testing-Predicting a One-Rep Max from Reps-to-Fatigue Journal of Physical Education, Recreation & Dance, 64:1, 88-90, DOI: 10.1080/07303084.1993.10606684"),
-               p("Guelaïa, G. (2020). La pyramide de la récupération. Panodyssey. https://panodyssey.com/fr/article/sport/la-pyramide-de-la-recuperation-8hm59btufgeu"),
+               p("Roza, A. M., & Shizgal, H. M. (1984). The Harris Benedict equation reevaluated: resting energy requirements and the body cell mass. the American Journal of Clinical Nutrition, 40(1), 168–182. https://doi.org/10.1093/ajcn/40.1.168"),
+               p("Lucas Gouiffes. (2019, August 30). 10 Minutes pour être calé en Muscu. [Video]. YouTube. https://www.youtube.com/watch?v=gmV6jYhdRng"),
+               p("The Muscle and Strength Pyramids: nutrition and training. (2023, November 28). The Muscle & Strength Pyramids. https://muscleandstrengthpyramids.com/"),
                p("Guelaïa, G. (2020). Combien de reps pour quels objectifs ? Panodyssey. https://panodyssey.com/fr/article/sport/combien-de-reps-pour-quels-objectifs-q95m2wmukppb")
                
                )
@@ -233,29 +250,13 @@ server <- function(input, output, session) {
   ##########################
   ######## ONGLET 2 ########
   ##########################
-  
+
   # Créer une liste réactive pour stocker les données des exercices
   exercices <- reactiveValues()
   
-  # Par défaut, ajouter un exercice à la première séance
-  exercices[[as.character(1)]] <- list(list(
-    mouvement = "Squat",
-    muscle = "Jambes",
-    series = 3,
-    repetitions_min = 6,
-    repetitions_max = 8
-  ))
-  
-  # Observer pour ajouter des exercices
-  observeEvent(input$ajouter_ligne, {
-    seance <- as.character(input$seance_select)
-    if (is.null(exercices[[seance]])) {
-      exercices[[seance]] <- list()
-    }
-    nouveau_exercice_id <- length(exercices[[seance]]) + 1
-    
-    # Stocker les valeurs des exercices existants
-    valeurs_exercices_existants <- lapply(seq_len(length(exercices[[seance]])), function(j) {
+  # Fonction pour récupérer les valeurs des exercices existants
+  get_exercise_values <- function(seance) {
+    lapply(seq_len(length(exercices[[seance]])), function(j) {
       list(
         mouvement = input[[paste0("mouvement_", seance, "_", j)]],
         muscle = input[[paste0("muscle_", seance, "_", j)]],
@@ -264,76 +265,127 @@ server <- function(input, output, session) {
         repetitions_max = input[[paste0("repetitions_", seance, "_", j)]][2]
       )
     })
+  }
+  
+  observe({
+    req(input$seances_par_semaine)
+    seances <- input$seances_par_semaine
     
-    
-    # Ajouter le nouvel exercice à la liste
-    exercices[[seance]] <- c(valeurs_exercices_existants, list(list(
-      mouvement = "",
-      muscle = "",
-      series = 3,
-      repetitions_min = 6,
-      repetitions_max = 8
-      )))
-    
-    # Vérifier si input$seances_par_semaine est NULL avant d'utiliser seq_len()
-    if (!is.null(input$seances_par_semaine)) {
-      # Mettre à jour l'UI avec le nouvel exercice et les exercices existants
-      output[[paste0("exercices_ui_", seance)]] <- renderUI({
+    lapply(seq_len(seances), function(i) {
+      output[[paste0("exercices_ui_", i)]] <- renderUI({
         fluidRow(
-          lapply(seq_len(length(exercices[[seance]])), function(j) {
+          lapply(seq_len(length(exercices[[as.character(i)]])), function(j) {
             fluidRow(
-              column(2, selectInput(paste0("mouvement_", seance, "_", j), "Mouvement:", mouvements, selected = exercices[[seance]][[j]]$mouvement)),
-              column(2, selectInput(paste0("muscle_", seance, "_", j), "Muscle ciblé:", muscles, selected = exercices[[seance]][[j]]$muscle)),
-              column(2, sliderInput(paste0("series_", seance, "_", j), "Nombre de séries:", min = 1, max = 10, value = exercices[[seance]][[j]]$series)),
-              column(2, sliderInput(paste0("repetitions_", seance, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(exercices[[seance]][[j]]$repetitions_min, exercices[[seance]][[j]]$repetitions_max)))
-              )
+              column(3, textInput(paste0("mouvement_", i, "_", j), "Nom de l'exercice:", 
+                                  value = ifelse(is.null(exercices[[as.character(i)]][[j]]$mouvement), "", exercices[[as.character(i)]][[j]]$mouvement))),
+              column(3, selectInput(paste0("muscle_", i, "_", j), "Muscle ciblé:", 
+                                    choices = muscles, 
+                                    selected = ifelse(is.null(exercices[[as.character(i)]][[j]]$muscle), "", exercices[[as.character(i)]][[j]]$muscle))),
+              column(3, sliderInput(paste0("series_", i, "_", j), "Nombre de séries:", 
+                                    min = 1, max = 10, 
+                                    value = ifelse(is.null(exercices[[as.character(i)]][[j]]$series), 1, exercices[[as.character(i)]][[j]]$series))),
+              column(3, sliderInput(paste0("repetitions_", i, "_", j), "Nombre de répétitions:", 
+                                    min = 1, max = 20, 
+                                    value = ifelse(is.null(exercices[[as.character(i)]][[j]]$repetitions_min) || is.null(exercices[[as.character(i)]][[j]]$repetitions_max), c(1, 1), c(exercices[[as.character(i)]][[j]]$repetitions_min, exercices[[as.character(i)]][[j]]$repetitions_max))))
+            )
           })
         )
       })
+    })
+  })
+  
+  # Observer pour ajouter des séances
+  observeEvent(input$seances_par_semaine, {
+    nouvelles_seances <- input$seances_par_semaine
+    
+    # Initialiser chaque séance avec une liste vide
+    for (i in seq_len(nouvelles_seances)) {
+      if (is.null(exercices[[as.character(i)]])) {
+        exercices[[as.character(i)]] <- list()
+      }
     }
+    
+    # Supprimer les séances en excès si le nombre de séances est réduit
+    if (nouvelles_seances < length(exercices)) {
+      for (i in (nouvelles_seances + 1):length(exercices)) {
+        exercices[[as.character(i)]] <- NULL
+      }
+    }
+  })
+  
+  # Observer pour ajouter des exercices
+  observeEvent(input$ajouter_ligne, {
+    seance <- as.character(input$seance_select)
+    
+    if (is.null(exercices[[seance]])) {
+      exercices[[seance]] <- list()
+    }
+    
+    # Capture existing values
+    valeurs_exercices_existants <- get_exercise_values(seance)
+    
+    # Add a new exercise with default values
+    if (length(valeurs_exercices_existants) < 7) {
+      valeurs_exercices_existants <- c(valeurs_exercices_existants, list(
+        list(
+          mouvement = "",
+          muscle = "",
+          series = 3,
+          repetitions_min = 6,
+          repetitions_max = 8
+        )
+      ))
+    }
+    
+    # Update reactive list
+    exercices[[seance]] <- valeurs_exercices_existants
+    
+    # Render updated UI
+    output[[paste0("exercices_ui_", seance)]] <- renderUI({
+      fluidRow(
+        lapply(seq_len(length(exercices[[seance]])), function(j) {
+          fluidRow(
+            column(3, textInput(paste0("mouvement_", seance, "_", j), "Nom de l'exercice:", value = exercices[[seance]][[j]]$mouvement)),
+            column(3, selectInput(paste0("muscle_", seance, "_", j), "Muscle ciblé:", choices = muscles, selected = exercices[[seance]][[j]]$muscle)),
+            column(3, sliderInput(paste0("series_", seance, "_", j), "Nombre de séries:", min = 1, max = 10, value = exercices[[seance]][[j]]$series)),
+            column(3, sliderInput(paste0("repetitions_", seance, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(exercices[[seance]][[j]]$repetitions_min, exercices[[seance]][[j]]$repetitions_max)))
+          )
+        })
+      )
+    })
   })
   
   # Observer pour supprimer des exercices
   observeEvent(input$supprimer_ligne, {
     seance <- as.character(input$seance_select)
+    
     if (!is.null(exercices[[seance]])) {
-      exercices[[seance]] <- exercices[[seance]][-length(exercices[[seance]])]
+      # Capture existing values
+      valeurs_exercices_existants <- get_exercise_values(seance)
       
-      # Stocker les valeurs des exercices existants
-      valeurs_exercices_existants <- lapply(seq_len(length(exercices[[seance]])), function(j) {
-        list(
-          mouvement = input[[paste0("mouvement_", seance, "_", j)]],
-          muscle = input[[paste0("muscle_", seance, "_", j)]],
-          series = input[[paste0("series_", seance, "_", j)]],
-          repetitions_min = input[[paste0("repetitions_", seance, "_", j)]][1],
-          repetitions_max = input[[paste0("repetitions_", seance, "_", j)]][2]
-        )
-      })
+      # Remove the last exercise
+      if (length(valeurs_exercices_existants) > 0) {
+        valeurs_exercices_existants <- valeurs_exercices_existants[-length(valeurs_exercices_existants)]
+      }
       
-      # Mettre à jour l'UI avec les exercices restants
+      # Update reactive list
+      exercices[[seance]] <- valeurs_exercices_existants
+      
+      # Render updated UI
       output[[paste0("exercices_ui_", seance)]] <- renderUI({
         fluidRow(
           lapply(seq_len(length(exercices[[seance]])), function(j) {
             fluidRow(
-              column(2, selectInput(paste0("mouvement_", seance, "_", j), "Mouvement:", mouvements, selected = ifelse(is.null(input$seance_select), NULL, req(valeurs_exercices_existants[[j]]$mouvement)))),
-              column(2, selectInput(paste0("muscle_", seance, "_", j), "Muscle ciblé:", muscles, selected = ifelse(is.null(input$seance_select), NULL, req(valeurs_exercices_existants[[j]]$muscle)))),
-              column(2, sliderInput(paste0("series_", seance, "_", j), "Nombre de séries:", min = 1, max = 10, value = ifelse(is.null(input$seance_select), NULL, req(valeurs_exercices_existants[[j]]$series)))),
-              column(2, sliderInput(paste0("repetitions_", seance, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(exercices[[seance]][[j]]$repetitions_min, exercices[[seance]][[j]]$repetitions_max)))
+              column(3, textInput(paste0("mouvement_", seance, "_", j), "Nom de l'exercice:", value = exercices[[seance]][[j]]$mouvement)),
+              column(3, selectInput(paste0("muscle_", seance, "_", j), "Muscle ciblé:", choices = muscles, selected = exercices[[seance]][[j]]$muscle)),
+              column(3, sliderInput(paste0("series_", seance, "_", j), "Nombre de séries:", min = 1, max = 10, value = exercices[[seance]][[j]]$series)),
+              column(3, sliderInput(paste0("repetitions_", seance, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(exercices[[seance]][[j]]$repetitions_min, exercices[[seance]][[j]]$repetitions_max)))
             )
           })
         )
-        
-        # Mettre à jour les valeurs des entrées utilisateur après avoir supprimé un exercice
-        for (j in seq_along(valeurs_exercices_existants)) {
-          updateSelectInput(session, paste0("mouvement_", seance, "_", j), selected = valeurs_exercices_existants[[j]]$mouvement)
-          updateSelectInput(session, paste0("muscle_", seance, "_", j), selected = valeurs_exercices_existants[[j]]$muscle)
-          updateSliderInput(session, paste0("series_", seance, "_", j), value = valeurs_exercices_existants[[j]]$series)
-          updateSliderInput(session, paste0("repetitions_", seance, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(exercices[[seance]][[j]]$repetitions_min, exercices[[seance]][[j]]$repetitions_max))
-        }
       })
     }
   })
-  
   
   # Observer pour mettre à jour le nombre de séances
   observeEvent(input$seances_par_semaine, {
@@ -347,12 +399,7 @@ server <- function(input, output, session) {
     }
   })
   
-  output$seance_select <- renderUI({
-    !is.null(input$seances_par_semaine) && is.numeric(input$seances_par_semaine) && input$seances_par_semaine >= 1
-      choices <- as.character(seq_len(input$seances_par_semaine))
-      selectInput("seance_select", "Choisir une séance :", choices = choices)
-  })
-
+  # Générer l'interface utilisateur pour les sous-onglets
   output$sous_onglets <- renderUI({
     if (!is.null(input$seances_par_semaine) && input$seances_par_semaine > 0) {
       tab_list <- lapply(seq_len(input$seances_par_semaine), function(i) {
@@ -364,65 +411,42 @@ server <- function(input, output, session) {
     }
   })
   
+  # Sélection de la séance
+  output$seance_select <- renderUI({
+    if (!is.null(input$seances_par_semaine) && is.numeric(input$seances_par_semaine) && input$seances_par_semaine >= 1) {
+      choices <- as.character(seq_len(input$seances_par_semaine))
+      selectInput("seance_select", "Choisir une séance :", choices = choices)
+    }
+  })
+  
   # Générer l'interface utilisateur pour les exercices de chaque séance
   observe({
     req(input$seances_par_semaine)
-    
-    seances <- as.integer(input$seances_par_semaine)
-    
-    if (is.na(seances) || seances <= 0) {
-      return()
-    }
+    seances <- input$seances_par_semaine
     
     lapply(seq_len(seances), function(i) {
-      # If the list for the current session is empty, add a default exercise
-      if (is.null(exercices[[as.character(i)]]) || length(exercices[[as.character(i)]]) == 0) {
-        exercices[[as.character(i)]] <- list(list(
-          mouvement = "Squat",
-          muscle = "Jambes",
-          series = 3,
-          repetitions_min = 6,
-          repetitions_max = 8
-        ))
-      }
-      
       output[[paste0("exercices_ui_", i)]] <- renderUI({
         fluidRow(
           lapply(seq_len(length(exercices[[as.character(i)]])), function(j) {
+            # Obtenir les valeurs actuelles ou utiliser des valeurs par défaut si elles sont NULL ou NA
+            mouvement_val <- ifelse(is.null(exercices[[as.character(i)]][[j]]$mouvement), "", exercices[[as.character(i)]][[j]]$mouvement)
+            muscle_val <- ifelse(is.null(exercices[[as.character(i)]][[j]]$muscle), "", exercices[[as.character(i)]][[j]]$muscle)
+            series_val <- ifelse(is.null(exercices[[as.character(i)]][[j]]$series), 3, exercices[[as.character(i)]][[j]]$series)
+            repetitions_min_val <- ifelse(is.null(exercices[[as.character(i)]][[j]]$repetitions_min), 6, exercices[[as.character(i)]][[j]]$repetitions_min)
+            repetitions_max_val <- ifelse(is.null(exercices[[as.character(i)]][[j]]$repetitions_max), 8, exercices[[as.character(i)]][[j]]$repetitions_max)
+            
             fluidRow(
-              column(2, selectInput(paste0("mouvement_", i, "_", j), "Mouvement:", mouvements, selected = exercices[[as.character(i)]][[j]]$mouvement)),
-              column(2, selectInput(paste0("muscle_", i, "_", j), "Muscle ciblé:", muscles, selected = exercices[[as.character(i)]][[j]]$muscle)),
-              column(2, sliderInput(paste0("series_", i, "_", j), "Nombre de séries:", min = 1, max = 10, value = exercices[[as.character(i)]][[j]]$series)),
-              column(2, sliderInput(paste0("repetitions_", i, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(exercices[[as.character(i)]][[j]]$repetitions_min, exercices[[as.character(i)]][[j]]$repetitions_max))))
+              column(3, textInput(paste0("mouvement_", i, "_", j), "Nom de l'exercice:", value = mouvement_val)),
+              column(3, selectInput(paste0("muscle_", i, "_", j), "Muscle ciblé:", choices = muscles, selected = muscle_val)),
+              column(3, sliderInput(paste0("series_", i, "_", j), "Nombre de séries:", min = 1, max = 10, value = series_val)),
+              column(3, sliderInput(paste0("repetitions_", i, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(repetitions_min_val, repetitions_max_val)))
+            )
           })
         )
       })
     })
   })
   
-  output$downloadPdf <- downloadHandler(
-    filename = function() {
-      paste("Structure_Seances", Sys.Date(), ".pdf", sep = "")
-    },
-    content = function(file) {
-      tempReport <- file.path(tempdir(), "rapport_seances.Rmd")
-      file.copy("rapport_seances.Rmd", tempReport, overwrite = TRUE)
-      
-      # Récupérer les données des exercices depuis la liste réactive
-      exercices_data <- reactiveValuesToList(exercices)
-      
-      # Vérifier la structure des données des exercices
-      print(str(exercices_data))
-      
-      params <- list(exercices = exercices_data)  # Passer les données des exercices mises à jour
-      
-      rmarkdown::render(tempReport, output_file = file, params = params, envir = new.env(parent = globalenv()))
-    }
-  )
-  
-  ##########################  
-  ######## ONGLET 3 ########
-  ##########################
   
   # Créer une variable réactive pour stocker les séries par muscle
   series_par_muscle <- reactiveValues(data = NULL)
@@ -443,8 +467,6 @@ server <- function(input, output, session) {
               } else {
                 series_data[[muscle]] <- rbind(series_data[[muscle]], data.frame(muscle = muscle, series = series))
               }
-            } else {
-              cat("Valeurs manquantes ou nulles pour l'exercice", j, "de la séance", seance, "\n")
             }
           }
         }
@@ -476,6 +498,81 @@ server <- function(input, output, session) {
     }
   })
   
+  observe({
+    req(input$seances_par_semaine)
+    seances <- input$seances_par_semaine
+    
+    lapply(seq_len(seances), function(i) {
+      output[[paste0("exercices_ui_", i)]] <- renderUI({
+        fluidRow(
+          lapply(seq_len(length(exercices[[as.character(i)]])), function(j) {
+            fluidRow(
+              column(3, textInput(paste0("mouvement_", i, "_", j), "Nom de l'exercice:", value = exercices[[as.character(i)]][[j]]$mouvement)),
+              column(3, selectInput(paste0("muscle_", i, "_", j), "Muscle ciblé:", choices = muscles, selected = exercices[[as.character(i)]][[j]]$muscle)),
+              column(3, sliderInput(paste0("series_", i, "_", j), "Nombre de séries:", min = 1, max = 10, value = exercices[[as.character(i)]][[j]]$series)),
+              column(3, sliderInput(paste0("repetitions_", i, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(exercices[[as.character(i)]][[j]]$repetitions_min, exercices[[as.character(i)]][[j]]$repetitions_max)))
+            )
+          })
+        )
+      })
+    })
+  })
+  
+  observe({
+    req(input$seances_par_semaine)
+    lapply(seq_len(input$seances_par_semaine), function(i) {
+      lapply(seq_len(length(exercices[[as.character(i)]])), function(j) {
+        observeEvent(input[[paste0("mouvement_", i, "_", j)]], {
+          exercices[[as.character(i)]][[j]]$mouvement <- input[[paste0("mouvement_", i, "_", j)]]
+        })
+        observeEvent(input[[paste0("muscle_", i, "_", j)]], {
+          exercices[[as.character(i)]][[j]]$muscle <- input[[paste0("muscle_", i, "_", j)]]
+        })
+        observeEvent(input[[paste0("series_", i, "_", j)]], {
+          exercices[[as.character(i)]][[j]]$series <- input[[paste0("series_", i, "_", j)]]
+        })
+        observeEvent(input[[paste0("repetitions_", i, "_", j)]], {
+          exercices[[as.character(i)]][[j]]$repetitions_min <- input[[paste0("repetitions_", i, "_", j)]][1]
+          exercices[[as.character(i)]][[j]]$repetitions_max <- input[[paste0("repetitions_", i, "_", j)]][2]
+        })
+      })
+    })
+  })
+
+  output$downloadPdf <- downloadHandler(
+    filename = function() {
+      paste("Programme_", input$client_name, "_", format(Sys.Date(), "%Y%m%d"), ".pdf", sep = "")
+    },
+    content = function(file) {
+      tempReport <- file.path(tempdir(), "rapport_seances.Rmd")
+      file.copy("rapport_seances.Rmd", tempReport, overwrite = TRUE)
+      
+      # Vérifier et préparer les données des exercices
+      if (is.null(exercices)) {
+        stop("Les données des exercices sont absentes.")
+      }
+      exercices_list <- reactiveValuesToList(exercices)
+      
+      # Préparer les paramètres pour le rendu du rapport
+      params_render <- list(
+        exercices = exercices_list,
+        client_name = input$client_name
+      )
+      
+      # Nettoyer l'environnement de tricotage si nécessaire
+      rm(list = ls(pattern = "^params"), envir = knitr::knit_global())
+      
+      # Rendre le rapport en utilisant les paramètres définis
+      rmarkdown::render(input = tempReport, output_file = file, params = params_render)
+    }
+  )
+  
+  
+  ##########################  
+  ######## ONGLET 3 ########
+  ##########################
+  
+  
   # Calcul tonnage théorique
   output$result <- renderText({
     set <- input$set
@@ -486,23 +583,13 @@ server <- function(input, output, session) {
     paste("Tonnage total :", tonnage, "kg")
   })
 
-  observe({
-    addTooltip(session, id = "dev",
-               title = "Pour maintenir la qualité voulue, il est conseillé de réaliser entre 10 et 20 séries par groupe musculaire par semaine",
-               trigger = "hover")
-    addTooltip(session, id = "maintien",
-               title = "Pour maintenir la qualité voulue, il est conseillé de réaliser entre 3 et 5 séries par groupe musculaire par semaine",
-               trigger = "hover"
-    )
-  })
-  
   # Calculer la 1RM théorique
   output$resultat_1rm <- renderPrint({
     req(input$charge, input$repetitions)
     
     pdc <- ifelse(is.na(input$poids_corps), 0, input$poids_corps)
     
-    if (input$repetitions >= 2 & input$repetitions <= 6) {
+    if (input$repetitions >= 1 & input$repetitions <= 5) {
       rm_theorique <- round((input$charge + pdc) / (1.0278 - (0.0278 * input$repetitions)) - pdc,2)
       cat("Charge maximale théorique :", rm_theorique, "kg\n")
     } else {
@@ -656,7 +743,6 @@ server <- function(input, output, session) {
       hoverinfo = "x+y+z"
     ) %>%
       layout(
-        title = "Matrice de corrélation",
         xaxis = list(title = "", tickangle = 45),
         yaxis = list(title = "")
       )
@@ -684,6 +770,7 @@ server <- function(input, output, session) {
             trigger = "hover")
   })
   
+  # Formule améliorée de Harris et Benedict par Roza et Shizgal (1984)
   calculate_mb <- reactive({
     if (input$sex == "Homme") {
       88.362 + (13.397 * input$weight) + (4.799 * input$height) - (5.677 * input$age)
