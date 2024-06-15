@@ -22,7 +22,7 @@ data <- read.csv(
 
 # Définir les listes prédéfinies
 mouvements <- c("Muscle up", "Squat", "Pull Up", "Dips", "Bench", "Deadlift", "Renfo")
-muscles <- c("Pectoraux","Abdominaux", "Trapèzes", "Dorsaux", "Epaules", "Quadriceps", "Ischio-jambiers", "Fessiers", "Mollets", "Bras")
+muscles <- c("Pectoraux", "Abdominaux", "Trapèzes", "Dorsaux", "Epaules", "Quadriceps", "Ischio-jambiers", "Fessiers", "Adducteurs", "Mollets", "Biceps", "Triceps")
 activity_levels <- c("Sédentaire", "Activité légère", "Activité modérée", "Activité intense", "Activité très intense")
 
 ui <- fluidPage(theme = shinytheme("cyborg"),
@@ -31,7 +31,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                            
                            tabPanel("	\ud83c\udfaf Présentation",
                                     mainPanel(width = 4,
-                                      h4("Bienvenue dans Gym Tracker"),
+                                      h3("Bienvenue dans Gym Tracker !"),
                                       p("Cette application vous aide à planifier vos séances d'entraînement et à suivre un plan nutritionnel."),
                                       h4("Fonctionnalités"),
                                       tags$ul(
@@ -58,60 +58,107 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                     )
                            ),
     
-    tabPanel("	\ud83c\udfc6 Entraînement",
-             sidebarPanel(
-               h4("Modulez votre semaine type d'entraînement"),
-               sliderInput("seances_par_semaine", "Nombre de séances par semaine:", min = 1, max = 7, value = 3),
-               uiOutput("seance_select"),
-               actionButton("ajouter_ligne", "Ajouter un exercice", icon = icon("plus")),
-               actionButton("supprimer_ligne", "Supprimer un exercice", icon = icon("minus")),
-               plotlyOutput("set_pie_chart"),
-               textInput("client_name", label = "Nom du pratiquant", value = "PrénomNom"),
-               downloadButton("downloadPdf", "Télécharger le PDF")
-             ),
-             mainPanel(width = 8,
-               titlePanel("Editez vos séances"),
-               uiOutput("sous_onglets")
-               )
-             ),
-    
     tabPanel("	\ud83c\udfcb\ufe0f\u200d\u2640 Pyramide de l'entraînement",
              mainPanel(
                titlePanel("	\ud83c\udfcb\ufe0f\u200d\u2640 Pyramide de l'entraînement"),
                tabsetPanel(
+                 tabPanel("Adhésion",
+                          fluidRow(
+                            mainPanel(width = 12,
+                                      h4("Le meilleur programme c'est celui que vous gardez !"),
+                                      p("Le meilleur programme, c'est celui qui est faisable, qui vous stimule et qui vous rend fière !"),
+                                      p("Se soummettre régulière à des charges de travail, permet une amélioration continue de vos capacités de performance."),
+                                      p("Interrompre cette continuité induit une baisse de la capacité de performance."),
+                                      h4("Tous les autres aspects sont bonus !"),
+                                      p("Suivre le programme de quelqu'un d'autre car il est optimal, ne sert à rien s'il ne vous motive pas, qu'il vous demande trop de temps et que le matériel est trop coûteux."),
+                                      p("Comprendre les principes de l'entraînement permet de maintenir un programme sur le long terme en prenant en compte vos contraintes personnelles, professionnelles et vos objectifs évolutifs.")
+                            ),
+                            sidebarPanel(width = 4,
+                              fluidRow(
+                                h4("Sélectionnez vos activités"),
+                                uiOutput("exercise_selection"))
+                              ),
+                            sidebarPanel(width = 8,
+                              h4("Semaine type d'entraînement"),
+                              plotlyOutput("plan_summary")
+                 )
+                 )
+               ),
                  tabPanel("Volume/Intensité/Fréquence",
                           fluidRow(
-                            sidebarPanel(width = 6,
+                            mainPanel(width = 5,
+                                      h4("Les principes fondamentaux"),
+                                      p("Chaque série de travail est une opportunité de progresser."),
+                                      actionButton(inputId = "vol", label = "Volume"),
+                                      actionButton(inputId = "int", label = "Intensité"),
+                                      actionButton(inputId = "freq", label = "Fréquence"),
+                                      actionButton(inputId = "dur", label = "Tempo"),
+                                      bsTooltip(id = "vol",
+                                                title = "Réfléchissez au nombre de répétitions/séries que vous souhaitez sur les groupes musculaires voulus.",
+                                                trigger = "hover"),
+                                      bsTooltip(id = "int",
+                                                title = "Mettez de la charge (tension mécanique) de manière progressive sur vos exercices.",
+                                                trigger = "hover"),
+                                      bsTooltip(id = "freq",
+                                                title = "Choisisez les exercices par séances que vous aimez et que vous êtes capable de réaliser.",
+                                                trigger = "hover"),
+                                      bsTooltip(id = "dur",
+                                                title = "Veillez à exécuter vos exercices correctement (phase concentrique et excentrique).",
+                                                trigger = "hover"),
+                                      h4(" "),
+                                      h4("Combien de séries par groupe musculaire ?"),
+                                      actionButton(inputId = "dev", label = "Pour developper"),
+                                      actionButton(inputId = "maintien", label = "Pour maintenir"),
+                                      bsTooltip(id = "dev",
+                                                title = "Pour developper la qualité voulue, il est conseillé de réaliser entre 10 et 20 séries par groupe musculaire par semaine",
+                                                trigger = "hover"),
+                                      bsTooltip(id = "maintien",
+                                                title = "Pour maintenir la qualité voulue, il est conseillé de réaliser entre 3 et 5 séries par groupe musculaire par semaine",
+                                                trigger = "hover"),
+                                      h4(" "),
+                                      h4("Combien de temps de repos entre les séries ?"),
+                                      actionButton(inputId = "poly", label = "Polyarticulaires"),
+                                      actionButton(inputId = "mono", label = "Monoarticulaires"),
+                                      bsTooltip(id = "poly",
+                                                title = "Il est conseillé de prendre entre 3 et 5 minutes de repos entre chaque série de travail",
+                                                trigger = "hover"),
+                                      bsTooltip(id = "mono",
+                                                title = "Il est conseillé de prendre entre 2 et 3 minutes de repos entre chaque série de travail",
+                                                trigger = "hover")
+                            ),
+                            
+                            sidebarPanel(width = 7,
                                          tags$figure(
                                            img(src = "rep.jpeg", height = "auto", width = "100%"),
                                            tags$figcaption("Crédit image : Ghaïs \"Geek'n'Fit\" Guelaïa, Combien de reps pour quels objectifs ?, panodyssey.com."))
-                            ),
-                            sidebarPanel(
-                                         h4("Combien de séries par groupe musculaire ?"),
-                                         actionButton(inputId = "dev", label = "Pour developper"),
-                                         actionButton(inputId = "maintien", label = "Pour maintenir"),
-                                         bsTooltip(id = "dev",
-                                                   title = "Pour developper la qualité voulue, il est conseillé de réaliser entre 10 et 20 séries par groupe musculaire par semaine",
-                                                   trigger = "hover"),
-                                         bsTooltip(id = "maintien",
-                                                   title = "Pour maintenir la qualité voulue, il est conseillé de réaliser entre 3 et 5 séries par groupe musculaire par semaine",
-                                                   trigger = "hover")
-                                         ),
-                            sidebarPanel(
-                                         h4("Combien de temps de repos entre les séries ?"),
-                                         actionButton(inputId = "poly", label = "Polyarticulaires"),
-                                         actionButton(inputId = "mono", label = "Monoarticulaires"),
-                                         bsTooltip(id = "poly",
-                                                   title = "Il est conseillé de prendre entre 3 et 5 minutes de repos entre chaque série de travail.",
-                                                   trigger = "hover"),
-                                         bsTooltip(id = "mono",
-                                                   title = "Il est conseillé de prendre entre 2 et 3 minutes de repos entre chaque série de travail",
-                                                   trigger = "hover")
-                                         )
+                            )
                             )
                           ),
                  tabPanel("Progression",
                           fluidRow(
+                            mainPanel(width =12,
+                                      h4("Comment progresser en musculation ?"),
+                                      p("Chaque série de travail est une opportunité de progresser. Toutefois, il est fondamental de faire preuve de progressivité."),
+                                      p("Uiliser des cycles de progression peut permettre de programmer votre progression de séance en séance. Des cycles de 8 à 12 semaines sont intéressants pour varier votre pratique et mettre l'accent sur un élément de votre physique : force, hypertrophie de certains groupes musculaires, endurance..."),
+                                      p("Tenir un cahier d'entraînement peur également faciliter le suivi de vos performances si vous notez vos charges et le RPE (effort perçu) pour chaque série de travail de chaque exercice à chaque séance."),
+                                      h4("4 manières de progresser : "),
+                                         actionButton(inputId = "volume", label = "Volume"),
+                                         actionButton(inputId = "intensite", label = "Intensité"),
+                                         actionButton(inputId = "fréquence", label = "Fréquence"),
+                                         actionButton(inputId = "duree", label = "Tempo"),
+                                         bsTooltip(id = "volume",
+                                                   title = "Visez plus de répétitions/séries sur vos groupes musculaires cibles à chaque entraînement.",
+                                                   trigger = "hover"),
+                                         bsTooltip(id = "intensite",
+                                                   title = "Augmentez les charges (tension mécanique) que vous soulevez à chaque entraînement.",
+                                                   trigger = "hover"),
+                                         bsTooltip(id = "fréquence",
+                                                   title = "Ajoutez des exercices/séances suplémentaires par semaine.",
+                                                   trigger = "hover"),
+                                         bsTooltip(id = "duree",
+                                                   title = "Prolongez votre temps sous tension lors de vos exercices (tempo, ralentir la phase excentrique...).",
+                                                   trigger = "hover"),
+                            ),
                             sidebarPanel(width = 6,
                                          h4("Calculateur théorique du tonnage"),
                                          numericInput("set", "Nombre de séries :", min = 0, value = 0),
@@ -128,20 +175,20 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                               verbatimTextOutput("resultat_1rm"),
                               tags$p("Note : La formule est précise pour 2 à 5 répétitions.", style = "font-size: 90%;"),
                               tags$p("Formule de Brzycki : 1RM = Charge soulevée / (1.0278 – (0.0278 x nRépétitions))", style = "font-size: 90%;")
+                            ),
                             )
-                          )
                  ),
                  tabPanel("Selection d'exercices",
                           mainPanel(
                               tabPanel("Force",
-                                       sidebarPanel(width = 6,
+                                       sidebarPanel(width = 12,
                                                     h4("Force"),
                                                     selectInput("mouvement", "Choisir un mouvement :",
                                                                 choices = c("Muscle up", "Squat", "Pull Up", "Dips", "Bench", "Deadlift")),
                                                     tableOutput("exercice"),
                                                     tableOutput("muscles_cibles")
                                                     ),
-                                       sidebarPanel(width = 6,
+                                       sidebarPanel(width = 12,
                                                     h4("Muscle"),
                                                     selectInput("muscle", "Choisir un muscle :",
                                                                 choices = muscles),
@@ -154,6 +201,24 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                  )
                )
              ),
+    
+    tabPanel("	\ud83c\udfc6 Entraînement",
+             sidebarPanel(
+               h4("Modulez votre semaine type d'entraînement"),
+               sliderInput("seances_par_semaine", "Nombre de séances par semaine : ", min = 1, max = 7, value = 3),
+               uiOutput("seance_select"),
+               actionButton("ajouter_ligne", "Ajouter un exercice", icon = icon("plus")),
+               actionButton("supprimer_ligne", "Supprimer un exercice", icon = icon("minus")),
+               h4("Volume par groupe musculaire"),
+               plotlyOutput("set_pie_chart"),
+               textInput("client_name", label = "Nom du pratiquant : ", value = ""),
+               downloadButton("downloadPdf", "Exporter le PDF")
+             ),
+             mainPanel(width = 8,
+                       titlePanel("Editez vos séances"),
+                       uiOutput("sous_onglets")
+             )
+    ),
     
     tabPanel("	\ud83c\udf4e Pyramide de la nutrition",
              mainPanel(
@@ -197,7 +262,13 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                    radioButtons(inputId = "select_level", label = "Sélectionner le niveau : ",
                                 choices = c("Groupes" = "alim_ssgrp_nom_fr",
                                             "Sous-groupes" = "alim_ssssgrp_nom_fr")),
-                   colourInput(inputId = "hist_color", label = "Choisir une couleur", value = "#C43413")
+                   colourInput(inputId = "hist_color", label = "Choisir une couleur", value = "#C43413"),
+                   p("Source : Ciqual 2020"),
+                   p("Pour faciliter un bon tracking de vos calories et de vos nutriments, utilisez des applications comme ",
+                     a("MyFitnessPal", href = "https://www.myfitnesspal.com/fr"),
+                     " ou encore ",
+                     a("Yazio", href = "https://www.yazio.com/fr"),
+                     ".")
                  ),
                  mainPanel(
                    plotlyOutput("histogram", height = 600)
@@ -208,7 +279,9 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                         mainPanel(width = 6,
                           h4("Matrice de corrélation"),
                           plotlyOutput("corr_Heatmap"),
-                                     
+                          p("Source : Ciqual 2020"),
+                          p("Pour identifier et suivre d'éventuelles carences, vous pouvez réaliser une prise de sang par an.")
+            
                         ),
                         sidebarPanel(width = 6,
                                      h4("Que dit ce graphique ?"),
@@ -226,7 +299,34 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                         )
                         )
                         ),
-             ))
+             tabPanel("Supplémentation",
+                      mainPanel(width = 12,
+                                h4("Gardez à l'esprit qu'il n'existe pas de pilule magique !"),
+                                p("Certains suppléments peuvent vous aider à combler des lacunes alimentaires et à soutenir vos entraînements, mais avant tout, il est fondamental d'affiner votre programme d'entraînement et de mettre en place un plan nutritionnel en phase avec vos objectifs."),
+                                p("Ne vous laissez pas piéger par le marketing et les publicités aguicheuses, tous les compléments et toutes les marques ne se valent pas !"),
+                                p("Pour choisir les bons compléments qui prennent soin tant de votre santé, que de celle de la planète, utilisez le ScanNuts de ",
+                                  a("Innutswetrust.", href = "https://innutswetrust.fr/"),
+                                ),
+                        h4("Quels compléments alimentaires ?"),
+                        actionButton(inputId = "pré", label = "Pré-entraînement"),
+                        actionButton(inputId = "intra", label = "Intra-entraînement"),
+                        actionButton(inputId = "post", label = "Post-entraînement"),
+                        actionButton(inputId = "santé", label = "Santé"),
+                        bsTooltip(id = "pré",
+                                  title = "Caféine, Bêta-Alanine, L-Arginine, Glutamine, Malate De Citrulline"),
+                                  trigger = "hover"),
+                        bsTooltip(id = "intra",
+                                  title = "Maltodextrine, Electrolytes",
+                                  trigger = "hover"),
+                        bsTooltip(id = "post",
+                                  title = "Créatine, Whey",
+                                  trigger = "hover"),
+                      bsTooltip(id = "santé",
+                                title = "Multivitamines, Multiminéraux, Collagène type I, Omega 3, Vitamine D, Zinc, Magnésium...",
+                                trigger = "hover")
+                        )
+             )
+             )
              ),
 
     tabPanel("\ud83d\udcd8 Sources",
@@ -241,6 +341,11 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                
                )
              )
+    ),
+    # Pied de page avec la signature
+    tags$footer(
+      style = "text-align: right; font-size: 12px;",
+      "Développé par ", tags$em("Lucie HUBERT"), " - ", format(Sys.Date(), "%Y")
     )
     )
 
@@ -248,8 +353,64 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
 server <- function(input, output, session) {
   
   ##########################
-  ######## ONGLET 2 ########
+  ######## ADHESION ########
   ##########################
+  
+  # Réactif pour stocker les sélections d'exercice
+  exercise_choices <- reactiveValues()
+  
+  # Initialiser les valeurs par défaut pour les 7 jours de la semaine
+  observe({
+    jours <- c("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
+    for (day in jours) {
+      if (is.null(exercise_choices[[day]])) {
+        exercise_choices[[day]] <- "Repos"
+      }
+    }
+  })
+  
+  # Observer pour mettre à jour les sélections d'exercice
+  observe({
+    jours <- c("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
+    lapply(jours, function(day) {
+      observeEvent(input[[paste0("exercise_", day)]], {
+        exercise_choices[[day]] <- input[[paste0("exercise_", day)]]
+      })
+    })
+  })
+  
+  # Rendu dynamique des sélecteurs d'exercice dans l'UI
+  output$exercise_selection <- renderUI({
+    jours <- c("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
+    lapply(jours, function(day) {
+      selectInput(paste0("exercise_", day), paste("Séance du", day, ":"), 
+                  choices = c("Musculation", "Course", "Natation", "Cyclisme", "Mobilité", "Yoga", "Repos"),
+                  selected = exercise_choices[[day]])
+    })
+  })
+  
+  output$plan_summary <- renderPlotly({
+    jours <- c("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
+    exercises_per_day <- sapply(jours, function(day) exercise_choices[[day]])
+    data <- data.frame(Jour = factor(jours, levels = jours),
+                       Exercices_day = exercises_per_day)
+    
+    p <- ggplot(data, aes(x = Jour, fill = Exercices_day)) + 
+      geom_bar() + 
+      theme_minimal() +
+      theme(legend.position = "none",
+            axis.title.x = element_blank(),
+            axis.title.y = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank()) +
+      scale_x_discrete(labels = jours)
+    
+    ggplotly(p)
+  })
+  
+  ##############################
+  ######## ENTRAINEMENT ########
+  ##############################
 
   # Créer une liste réactive pour stocker les données des exercices
   exercices <- reactiveValues()
@@ -490,8 +651,7 @@ server <- function(input, output, session) {
   
   output$set_pie_chart <- renderPlotly({
     if (!is.null(exercices$series_summary_par_semaine)) {
-      plot_ly(exercices$series_summary_par_semaine, labels = ~Muscle, values = ~Series, type = 'pie') %>%
-        layout(title = "Volume par groupe musculaire")
+      plot_ly(exercices$series_summary_par_semaine, labels = ~Muscle, values = ~Series, type = 'pie')
     } else {
       plot_ly() %>%
         layout(title = "Aucune donnée disponible")
@@ -547,16 +707,15 @@ server <- function(input, output, session) {
       tempReport <- file.path(tempdir(), "rapport_seances.Rmd")
       file.copy("rapport_seances.Rmd", tempReport, overwrite = TRUE)
       
-      # Vérifier et préparer les données des exercices
-      if (is.null(exercices)) {
-        stop("Les données des exercices sont absentes.")
-      }
       exercices_list <- reactiveValuesToList(exercices)
+      exercices_per_day <- reactiveValuesToList(exercise_choices)
       
       # Préparer les paramètres pour le rendu du rapport
       params_render <- list(
         exercices = exercices_list,
-        client_name = input$client_name
+        exercise_choices = exercices_per_day,
+        client_name = input$client_name,
+        series_summary_par_semaine = input$series_summary_par_semaine
       )
       
       # Nettoyer l'environnement de tricotage si nécessaire
@@ -567,9 +726,8 @@ server <- function(input, output, session) {
     }
   )
   
-  
   ##########################  
-  ######## ONGLET 3 ########
+  ######## PROGRESSION #####
   ##########################
   
   
@@ -591,7 +749,7 @@ server <- function(input, output, session) {
     
     if (input$repetitions >= 1 & input$repetitions <= 5) {
       rm_theorique <- round((input$charge + pdc) / (1.0278 - (0.0278 * input$repetitions)) - pdc,2)
-      cat("Charge maximale théorique :", rm_theorique, "kg\n")
+      cat("1RM théorique :", rm_theorique, "kg\n")
     } else {
       cat("La formule n'est pas précise pour ce nombre de répétitions.")
     }
@@ -601,9 +759,9 @@ server <- function(input, output, session) {
     output$resultat_1rm
   })
   
-  ##########################  
-  ######## ONGLET 4 ########
-  ########################## 
+  ##################################### 
+  ######## SELECTION EXERCICES ########
+  #####################################
   
   # Définir la sortie output$exercice
   output$exercice <- renderUI({
@@ -657,6 +815,10 @@ server <- function(input, output, session) {
     }))
     tags$ul(exercices_muscle_html)
   })
+  
+  #################################
+  ######## MACRONUTRIMENTS ########
+  #################################
   
   # Fonction pour générer un histogramme
   generate_histogram <- function(data, level, color, title) {
@@ -715,6 +877,10 @@ server <- function(input, output, session) {
     generate_nutrient_histogram(input$nutrient, input$select_level, input$hist_color)
   })
   
+  #################################
+  ######## MICRONUTRIMENTS ########
+  #################################
+  
   output$corr_Heatmap <- renderPlotly({
     # Conversion des données en une matrice
     M <- as.matrix(data[, 10:76])
@@ -769,6 +935,10 @@ server <- function(input, output, session) {
             les Glucides (n°17) et les Lipides (n°18).",
             trigger = "hover")
   })
+  
+  #################################
+  ######## BALANCE ENERGETIQUE ####
+  #################################
   
   # Formule améliorée de Harris et Benedict par Roza et Shizgal (1984)
   calculate_mb <- reactive({

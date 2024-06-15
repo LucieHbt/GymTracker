@@ -7,18 +7,39 @@ date: "`r format(Sys.Date(), '%d %B %Y')`"
 params:
   client_name: NULL
   exercices: NULL
-  mouvement: NULL
+  exercise_choices: NULL
+  series_summary_par_semaine: NULL
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(shiny)
 library(knitr)
 library(kableExtra)
+library(plotly)
+library(gridExtra)
+library(grid)
 
-# Vérifier si les exercices sont bien passés en paramètres
-if (is.null(params$exercices)) {
-  stop("Les paramètres des exercices sont absents")
+# Fonction pour créer un tableau récapitulatif de la semaine type d'entraînement
+creer_tableau_recapitulatif <- function(exercise_choices) {
+  jours <- c("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
+  
+  # Vérifier et attribuer un exercice par défaut si nécessaire
+  for (jour in jours) {
+    if (is.null(exercise_choices[[jour]])) {
+      exercise_choices[[jour]] <- "Repos"
+    }
+  }
+  
+  # Création du tableau récapitulatif avec une seule ligne "Exercice"
+  tableau <- matrix("", nrow = 1, ncol = length(jours), dimnames = list("Exercice", jours))
+  
+  # Remplissage des exercices dans la seule ligne ("Exercice")
+  for (seance in seq_along(jours)) {
+    jour <- jours[seance]
+    tableau["Exercice", jour] <- exercise_choices[[jour]]
+  }
+  
+  return(tableau)
 }
 
 # Fonction pour afficher les exercices d'une séance sous forme de tableau
@@ -31,14 +52,19 @@ afficher_exercices <- function(seance, exercices) {
   }
 
   for (i in seq_along(exercices)) {
-    cat("Exercice ", i, "\n")
-    cat("Mouvement: ", exercices[[i]]$mouvement, "\n")
-    cat("Muscle: ", exercices[[i]]$muscle, "\n")
-    cat("Séries: ", exercices[[i]]$series, "\n")
-    cat("Répétitions: ", exercices[[i]]$repetitions_min, "-", exercices[[i]]$repetitions_max, "\n\n")
+    cat("Exercice ", i, (":"), "\n")
+    cat(exercices[[i]]$mouvement, "\n")
+    cat("(", exercices[[i]]$muscle,")","\n")
+    cat(" ",exercices[[i]]$series, "\n")
+    cat(" * ", exercices[[i]]$repetitions_min, "à", exercices[[i]]$repetitions_max, ("répétitions"), "\n\n")
   }
 }
+```
 
+# Semaine type d'entraînement
+```{r echo=FALSE, results='asis'}
+tableau_recap <- creer_tableau_recapitulatif(params$exercise_choices)
+print(kable(tableau_recap, format = "latex", booktabs = TRUE))
 ```
 
 # Répartition des séances
@@ -54,8 +80,11 @@ for (seance in seq_along(params$exercices)) {
 ```{r echo=FALSE, results='asis'}
 if ("series_summary_par_semaine" %in% names(params$exercices)) {
   summary_df <- params$exercices$series_summary_par_semaine
-  print(kable(summary_df, format = "latex", booktabs = TRUE, linesep = "") %>%
-          kable_styling()
-        )
-}
+
+  # Création du tableau en LaTeX avec kable
+  table_output <- kable(summary_df, format = "latex", booktabs = TRUE)
+
+  # Afficher le tableau LaTeX
+  print(table_output)
+  }
 ```
