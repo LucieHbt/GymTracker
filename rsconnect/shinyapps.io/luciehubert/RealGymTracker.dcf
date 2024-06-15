@@ -1,0 +1,12 @@
+name: RealGymTracker
+title: RealGymTracker
+username: luciehubert
+account: luciehubert
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 12187765
+bundleId: 8746899
+url: https://luciehubert.shinyapps.io/RealGymTracker/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

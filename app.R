@@ -45,8 +45,8 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                       h4("Instructions"),
                                       p("Utilisez les onglets en haut pour naviguer à travers les différentes fonctionnalités de l'application."),
                                       tags$ul(
-                                        tags$li("Entraînement : planifiez et éditez vos séances."),
                                         tags$li("Pyramide de l'entraînement : comprenez comment structurer vos séances selon vos objectifs."),
+                                        tags$li("Entraînement : planifiez et éditez vos séances."),
                                         tags$li("Pyramide de la nutrition : obtenez les bases de la nutrition sportive."),
                                         tags$li("Sources : consultez les références utilisées.")
                                       )
@@ -92,7 +92,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                       actionButton(inputId = "vol", label = "Volume"),
                                       actionButton(inputId = "int", label = "Intensité"),
                                       actionButton(inputId = "freq", label = "Fréquence"),
-                                      actionButton(inputId = "dur", label = "Tempo"),
+                                      actionButton(inputId = "exe", label = "Exécution"),
                                       bsTooltip(id = "vol",
                                                 title = "Réfléchissez au nombre de répétitions/séries que vous souhaitez sur les groupes musculaires voulus.",
                                                 trigger = "hover"),
@@ -100,10 +100,10 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                                 title = "Mettez de la charge (tension mécanique) de manière progressive sur vos exercices.",
                                                 trigger = "hover"),
                                       bsTooltip(id = "freq",
-                                                title = "Choisisez les exercices par séances que vous aimez et que vous êtes capable de réaliser.",
+                                                title = "Choisisez les exercices par séances que vous aimez et que vous êtes capable de réaliser sans douleurs.",
                                                 trigger = "hover"),
-                                      bsTooltip(id = "dur",
-                                                title = "Veillez à exécuter vos exercices correctement (phase concentrique et excentrique).",
+                                      bsTooltip(id = "exe",
+                                                title = "Soignez l'exécution de vos exercices (phase concentrique et excentrique).",
                                                 trigger = "hover"),
                                       h4(" "),
                                       h4("Combien de séries par groupe musculaire ?"),
@@ -212,7 +212,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                h4("Volume par groupe musculaire"),
                plotlyOutput("set_pie_chart"),
                textInput("client_name", label = "Nom du pratiquant : ", value = ""),
-               downloadButton("downloadPdf", "Exporter le PDF")
+               downloadButton("downloadPdf", "Sauvegardez votre semaine type en PDF")
              ),
              mainPanel(width = 8,
                        titlePanel("Editez vos séances"),
@@ -271,18 +271,12 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                      ".")
                  ),
                  mainPanel(
+                   uiOutput("histo_title"),
                    plotlyOutput("histogram", height = 600)
                  )
              ),
              tabPanel("Micronutriments",
                       fluidRow(
-                        mainPanel(width = 6,
-                          h4("Matrice de corrélation"),
-                          plotlyOutput("corr_Heatmap"),
-                          p("Source : Ciqual 2020"),
-                          p("Pour identifier et suivre d'éventuelles carences, vous pouvez réaliser une prise de sang par an.")
-            
-                        ),
                         sidebarPanel(width = 6,
                                      h4("Que dit ce graphique ?"),
                                      actionButton(inputId = "correlation_interpretation_p", label = "Exemple de corrélation positive "),
@@ -296,6 +290,12 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                      p(""),
                                      selectInput(inputId = "number", label = "Sélectionner un numéro :", choices = as.character(seq(10, 76, 1))),
                                      textOutput("corresponding_name")
+                        ),
+                        mainPanel(width = 6,
+                          h4("Matrice de corrélation"),
+                          plotlyOutput("corr_Heatmap"),
+                          p("Source : Ciqual 2020"),
+                          p("Pour identifier et suivre d'éventuelles carences, vous pouvez réaliser une prise de sang par an.")
                         )
                         )
                         ),
@@ -820,36 +820,8 @@ server <- function(input, output, session) {
   ######## MACRONUTRIMENTS ########
   #################################
   
-  # Fonction pour générer un histogramme
-  generate_histogram <- function(data, level, color, title) {
-    histogram_data <- table(data[[level]])
-    sorted_names <- sort(names(histogram_data))
-    
-    plot_ly(
-      x = sorted_names,
-      y = histogram_data[sorted_names],
-      type = "bar",
-      marker = list(color = color)
-    ) %>%
-      layout(
-        yaxis = list(title = "Nombre d'aliments"),
-        title = title
-      )
-  }
-  
-  # Histogramme pour le nombre d'alments
-  output$histogram_data <- renderPlotly({
-    color_data <- input$hist_color_data
-    level <- switch(input$group_level,
-                    "Groupes" = "alim_grp_nom_fr",
-                    "Sous-groupes" = "alim_ssgrp_nom_fr",
-                    "Sous-sous-groupes" = "alim_ssssgrp_nom_fr")
-    
-    generate_histogram(data, level, color_data, input$hist_title_data)
-  })
-  
-  # Histogrammes pour les taux de protéines, glucides et lipides
-  generate_nutrient_histogram <- function(nutrient, level, color) {
+  # Function to generate nutrient histograms
+  generate_nutrient_histogram <- function(data, nutrient, level, color) {
     nutrient_column <- switch(nutrient,
                               "proteines" = "Protéines..N.x.6.25..g.100.g.",
                               "glucides" = "Glucides..g.100.g.",
@@ -868,13 +840,22 @@ server <- function(input, output, session) {
     ) %>%
       layout(
         xaxis = list(title = ""),
-        yaxis = list(title = paste("Taux moyen de", nutrient, "pour 100g")),
-        title = paste("Distribution des", nutrient)
+        yaxis = list(title = paste("Taux moyen de", nutrient, "pour 100g"))
       )
   }
   
-  output$histogram <- renderPlotly({
-    generate_nutrient_histogram(input$nutrient, input$select_level, input$hist_color)
+    output$histogram <- renderPlotly({
+      generate_nutrient_histogram(data, input$nutrient, input$select_level, input$hist_color)
+      })
+    
+
+  # Reactive expression to create the dynamic title
+  output$histo_title <- renderUI({
+    nutrient_name <- switch(input$nutrient,
+                            "proteines" = "Protéines",
+                            "glucides" = "Glucides",
+                            "lipides" = "Lipides")
+    h4(paste("Distribution des", nutrient_name))
   })
   
   #################################
