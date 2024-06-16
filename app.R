@@ -1,4 +1,8 @@
 
+##########################
+######## GLOBAL ##########
+##########################
+
 library(shiny)
 library(shinythemes)
 library(shinyBS)
@@ -24,6 +28,10 @@ data <- read.csv(
 mouvements <- c("Muscle up", "Squat", "Pull Up", "Dips", "Bench", "Deadlift", "Renfo")
 muscles <- c("Pectoraux", "Abdominaux", "Trapèzes", "Dorsaux", "Epaules", "Quadriceps", "Ischio-jambiers", "Fessiers", "Adducteurs", "Mollets", "Biceps", "Triceps")
 activity_levels <- c("Sédentaire", "Activité légère", "Activité modérée", "Activité intense", "Activité très intense")
+
+##########################
+########### UI ###########
+##########################
 
 ui <- fluidPage(theme = shinytheme("cyborg"),
                 shinythemes::themeSelector(),
@@ -63,14 +71,13 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                titlePanel("	\ud83c\udfcb\ufe0f\u200d\u2640 Pyramide de l'entraînement"),
                tabsetPanel(
                  tabPanel("Adhésion",
-                          fluidRow(
                             mainPanel(width = 12,
                                       h4("Le meilleur programme c'est celui que vous gardez !"),
                                       p("Le meilleur programme, c'est celui qui est faisable, qui vous stimule et qui vous rend fière !"),
                                       p("Se soummettre régulière à des charges de travail, permet une amélioration continue de vos capacités de performance."),
                                       p("Interrompre cette continuité induit une baisse de la capacité de performance."),
                                       h4("Tous les autres aspects sont bonus !"),
-                                      p("Suivre le programme de quelqu'un d'autre car il est optimal, ne sert à rien s'il ne vous motive pas, qu'il vous demande trop de temps et que le matériel est trop coûteux."),
+                                      p("Suivre le programme de quelqu'un d'autre car il est « optimal », ne sert à rien s'il ne vous motive pas, qu'il vous demande trop de temps et que le matériel est trop coûteux."),
                                       p("Comprendre les principes de l'entraînement permet de maintenir un programme sur le long terme en prenant en compte vos contraintes personnelles, professionnelles et vos objectifs évolutifs.")
                             ),
                             sidebarPanel(width = 4,
@@ -82,17 +89,16 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                               h4("Semaine type d'entraînement"),
                               plotlyOutput("plan_summary")
                  )
-                 )
                ),
                  tabPanel("Volume/Intensité/Fréquence",
                           fluidRow(
-                            mainPanel(width = 5,
+                            mainPanel(width = 4,
                                       h4("Les principes fondamentaux"),
-                                      p("Chaque série de travail est une opportunité de progresser."),
+                                      p("Le nombre d’exercices et votre temps n’étant pas illimités, voici les principales variables d'entraînement sur lesquelles vous pouvez jouer :"),
                                       actionButton(inputId = "vol", label = "Volume"),
                                       actionButton(inputId = "int", label = "Intensité"),
                                       actionButton(inputId = "freq", label = "Fréquence"),
-                                      actionButton(inputId = "exe", label = "Exécution"),
+                                      actionButton(inputId = "exe_btn", label = "Exécution"),
                                       bsTooltip(id = "vol",
                                                 title = "Réfléchissez au nombre de répétitions/séries que vous souhaitez sur les groupes musculaires voulus.",
                                                 trigger = "hover"),
@@ -102,28 +108,28 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                       bsTooltip(id = "freq",
                                                 title = "Choisisez les exercices par séances que vous aimez et que vous êtes capable de réaliser sans douleurs.",
                                                 trigger = "hover"),
-                                      bsTooltip(id = "exe",
-                                                title = "Soignez l'exécution de vos exercices (phase concentrique et excentrique).",
+                                      bsTooltip(id = "exe_btn",
+                                                title = "Soignez la technique d`exécution de vos exercices (phase concentrique/excentrique, vitesse, amplitude...).",
                                                 trigger = "hover"),
-                                      h4(" "),
+                                      
                                       h4("Combien de séries par groupe musculaire ?"),
                                       actionButton(inputId = "dev", label = "Pour developper"),
                                       actionButton(inputId = "maintien", label = "Pour maintenir"),
                                       bsTooltip(id = "dev",
-                                                title = "Pour developper la qualité voulue, il est conseillé de réaliser entre 10 et 20 séries par groupe musculaire par semaine",
+                                                title = "Pour developper la qualité voulue, il est conseillé de réaliser entre 10 et 20 séries par groupe musculaire par semaine.",
                                                 trigger = "hover"),
                                       bsTooltip(id = "maintien",
-                                                title = "Pour maintenir la qualité voulue, il est conseillé de réaliser entre 3 et 5 séries par groupe musculaire par semaine",
+                                                title = "Pour maintenir la qualité voulue, il est conseillé de réaliser entre 3 et 5 séries par groupe musculaire par semaine.",
                                                 trigger = "hover"),
-                                      h4(" "),
+                                      
                                       h4("Combien de temps de repos entre les séries ?"),
                                       actionButton(inputId = "poly", label = "Polyarticulaires"),
                                       actionButton(inputId = "mono", label = "Monoarticulaires"),
                                       bsTooltip(id = "poly",
-                                                title = "Il est conseillé de prendre entre 3 et 5 minutes de repos entre chaque série de travail",
+                                                title = "Il est conseillé de prendre entre 3 et 5 minutes de repos entre chaque série de travail.",
                                                 trigger = "hover"),
                                       bsTooltip(id = "mono",
-                                                title = "Il est conseillé de prendre entre 2 et 3 minutes de repos entre chaque série de travail",
+                                                title = "Il est conseillé de prendre entre 2 et 3 minutes de repos entre chaque série de travail.",
                                                 trigger = "hover")
                             ),
                             
@@ -135,13 +141,13 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                             )
                           ),
                  tabPanel("Progression",
-                          fluidRow(
                             mainPanel(width =12,
                                       h4("Comment progresser en musculation ?"),
                                       p("Chaque série de travail est une opportunité de progresser. Toutefois, il est fondamental de faire preuve de progressivité."),
                                       p("Uiliser des cycles de progression peut permettre de programmer votre progression de séance en séance. Des cycles de 8 à 12 semaines sont intéressants pour varier votre pratique et mettre l'accent sur un élément de votre physique : force, hypertrophie de certains groupes musculaires, endurance..."),
                                       p("Tenir un cahier d'entraînement peur également faciliter le suivi de vos performances si vous notez vos charges et le RPE (effort perçu) pour chaque série de travail de chaque exercice à chaque séance."),
                                       h4("4 manières de progresser : "),
+                                      p("Vous ne devez moduler q'une seule variable à la fois, afin de progresser tout en respectant vos capacités de récupération."),
                                          actionButton(inputId = "volume", label = "Volume"),
                                          actionButton(inputId = "intensite", label = "Intensité"),
                                          actionButton(inputId = "fréquence", label = "Fréquence"),
@@ -175,30 +181,35 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                               verbatimTextOutput("resultat_1rm"),
                               tags$p("Note : La formule est précise pour 2 à 5 répétitions.", style = "font-size: 90%;"),
                               tags$p("Formule de Brzycki : 1RM = Charge soulevée / (1.0278 – (0.0278 x nRépétitions))", style = "font-size: 90%;")
-                            ),
                             )
                  ),
                  tabPanel("Selection d'exercices",
-                          mainPanel(
-                              tabPanel("Force",
-                                       sidebarPanel(width = 12,
-                                                    h4("Force"),
-                                                    selectInput("mouvement", "Choisir un mouvement :",
-                                                                choices = c("Muscle up", "Squat", "Pull Up", "Dips", "Bench", "Deadlift")),
-                                                    tableOutput("exercice"),
-                                                    tableOutput("muscles_cibles")
-                                                    ),
-                                       sidebarPanel(width = 12,
-                                                    h4("Muscle"),
-                                                    selectInput("muscle", "Choisir un muscle :",
-                                                                choices = muscles),
-                                                    tableOutput("exercices_muscle")
-                                                    )
-                                       
-                            )
+                          mainPanel(width = 12,
+                                    h4("Comment choisir les bons exercices ?"),
+                                    p("Chaque morphologie est unique. C'est pourquoi, le choix des exercices doit être individuel. Il ne s'agit pas de reprendre le programme tout fait d'un ami ou celui de votre influenceur préféré. Car, certains de ces exercices vous iront, mais d'autres beaucoup moins."),
+                                    p("Il existe de grandes inégalités entre chaque personne pour les mêmes exercices. Si un exercice ne vous convient pas, parce que son exécution vous fait mal, il est inutile d'insister : mettez cet exercice de côté."),
+                                    p("Choisissez vos exercices selon votre morphologie et selon vos objectifs, dirigez vous vers des exercices agréables à exécuter et utiles."),
+                                    p("Il existe une distinction qui permet déjà de classer les exercices en deux groupes : "),
+                                    tags$ul(
+                                      tags$li("Les exercices polyarticulaires : permettent de soulever lourd avec une forte sollicitation des muscles (forte tension mécanique) en peu de temps (faible stress métabolique), mais ils sont fatiguants et ne permettent pas forcément de mettre un muscle au centre des priorités."),
+                                      tags$li("Les exercices monoarticulaires ou d'isolation : sollicitent moins de muscles (faible tension mécanique), mais demandent moins d'énergie, il donc possible de cibler des muscles en particulier plus longtemps (fort stress métabolique).")),
+                                    p("Les exercices polyarticulaires doivent composer l'essentiel d'un programme (1 à 2 exercices par séance), puis les exercices d'isolation peuvent se greffer à votre programme afin d'aider au développement de muscles en retard ou auxquels vous voulez donner la priorité.")
+                                    ),
+                          sidebarPanel(width = 12,
+                                       h4("Exercices de renforcement pour les exercices polyarticulaires courants"),
+                                       selectInput("mouvement", "Choisir un mouvement :",
+                                                   choices = c("Muscle up", "Squat", "Pull Up", "Dips", "Bench", "Deadlift")),
+                                       tableOutput("exercice"),
+                                       tableOutput("muscles_cibles")
+                                       ),
+                          sidebarPanel(width = 12,
+                                       h4("Exercices ciblés pour votre objectif"),
+                                       selectInput("muscle", "Choisir un muscle :",
+                                                   choices = muscles),
+                                       tableOutput("exercices_muscle")
+                                       )
                           )
-                 )
-                 )
+               )
                )
              ),
     
@@ -225,38 +236,84 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                titlePanel("	\ud83c\udf4e Pyramide de la nutrition"),
                tabsetPanel(
                  tabPanel("Balance énergétique",
-                          fluidRow(
-                            sidebarPanel(
-                                         selectInput("sex", "Sexe", choices = c("Homme", "Femme")),
-                                         numericInput("age", "Âge (années)", value = 22, min = 0),
-                                         numericInput("weight", "Poids (kg)", value = 60, min = 0),
-                                         numericInput("height", "Taille (cm)", value = 163, min = 0),
-                                         selectInput("activity", "Niveau d'activité physique",
-                                                     choices = list("Sédentaire" = 1.2, 
-                                                                    "Activité légère" = 1.375, 
-                                                                    "Activité modérée" = 1.55, 
-                                                                    "Activité intense" = 1.725, 
-                                                                    "Activité très intense" = 1.9),
-                                                     selected = "Sédentaire"),
-                                         textOutput("mb_result"),
-                                         textOutput("bcj_result")
+                            mainPanel(width = 12,
+                              h4("De quoi parle t-on ?"),
+                              p("La balance énergétique fait référence à l’équilibre entre les calories que vous consommez (par l’alimentation) et les calories que vous brûlez (par l’exercice physique et le métabolisme de base) au cours d’une journée."),
+                              tags$ul(
+                                tags$li("Si vous consommez plus de calories que vous n’en brûlez, vous prendrez du poids."),
+                                tags$li("Si vous brûlez plus de calories que vous n’en consommez, vous perdrez du poids.")),
+                              p("Il existe deux leviers pour agir sur la balance énergétique :"),
+                              tags$ul(
+                                tags$li("Agir sur votre activité physique : marche, sport..."),
+                                tags$li("Agir sur votre apport calorique : surplus/maintien/déficit calorique.")),
+                              h4("Mon niveau d'activité ?"),
+                              actionButton(inputId = "sed", label = "Sédentaire"),
+                              actionButton(inputId = "l_actif", label = "Légèrement actif"),
+                              actionButton(inputId = "actif", label = "Actif"),
+                              actionButton(inputId = "t_actif", label = "Très actif"),
+                              actionButton(inputId = "ext_actif", label = "Extrênement actif"),
+                              bsTooltip(id = "sed",
+                                        title = "Aucun exercice quotidien ou presque.",
+                                        trigger = "hover"),
+                              bsTooltip(id = "l_actif",
+                                        title = "Vous faites parfois des exercices physiques (1 à 3 fois par semaine).",
+                                        trigger = "hover"),
+                              bsTooltip(id = "actif",
+                                        title = "Vous faites régulièrement des exercices physiques (3 à 5 fois par semaine).",
+                                        trigger = "hover"),
+                              bsTooltip(id = "t_actif",
+                                        title = "Vous faites quotidiennement du sport ou des exercices physiques soutenus.",
+                                        trigger = "hover"),
+                              bsTooltip(id = "ext_actif",
+                                        title = "Votre travail est extrêmement physique ou bien vous vous considérez comme un athlète.",
+                                        trigger = "hover"),
+                              p("Par exemple, si vous êtes étudiant et que vous faites du sport 4 fois par semaine, alors vous êtes considéré comme étant « actif »."),
+                              tags$ul(
+                                tags$li("Maintenir votre poids : consommez ce que vous dépensez."),
+                                tags$li("Prendre du poids :	\u2197 de 15% votre apport calorique (glucides) pendant 2 semaines, puis 	\u2197 progressivement de 10% toutes les 2 semaines."),
+                                tags$li("Perdre du poids : \u2198 de 15% votre apport calorique (glucides) pendant 2 semaines, puis \u2198 progressivement de 10% toutes les 2 semaines."))
+                              ),
+                            sidebarPanel(width = 3,
+                              selectInput("sex", "Sexe", choices = c("Homme", "Femme")),
+                              numericInput("age", "Âge (années)", value = 22, min = 0),
+                              numericInput("weight", "Poids (kg)", value = 60, min = 0),
+                              numericInput("height", "Taille (cm)", value = 163, min = 0),
+                              selectInput("activity", "Niveau d'activité physique",
+                                          choices = list("Sédentaire" = 1.2,
+                                                         "Activité légère" = 1.375,
+                                                         "Activité modérée" = 1.55,
+                                                         "Activité intense" = 1.725,
+                                                         "Activité très intense" = 1.9),
+                                          selected = "Sédentaire"),
+                              textOutput("mb_result"),
+                              textOutput("bcj_result"),
                             ),
                             mainPanel(
                               fluidRow(
                                 column(6,
                                        h4("Dépense Énergétique Quotidienne"),
-                                       plotlyOutput("energy_plot")
+                                       plotlyOutput("energy_plot"),
+                                       p("ATTENTION ce ne sont que des estimations théoriques, vous devez ajuster ce chiffre selon vos résultats."),
                                 ),
                                 column(6,
                                        h4(textOutput("macro_title")),
-                                       plotlyOutput("macro_plot")
-                            )
-                          )
+                                       plotlyOutput("macro_plot"))
                           )
                           )
                  ),
                tabPanel("Macronutriments",
-                 sidebarPanel(
+                 mainPanel(width = 12,
+                   h4("Protéines, Glucides, Lipides ?"),
+                   p("Nos apports énergétiques nous proviennent uniquement de ce que nous mangeons et buvons."),
+                   p("Les calories issues de l’alimentation existent principalement sous 3 formes, appelés macronutriments : les protéines, les glucides et les lipides."),
+                   tags$ul(
+                     tags$li("1 g de protéine = 4 Cal."),
+                     tags$li("1 g de glucides = 4 Cal."),
+                     tags$li("1 g de lipides = 9 Cal.")),
+                   p("Pensez au fait qu'aucun aliment ne fait grossir ou mincir en soi. L’effet d’une calorie sur notre poids est le même : 1.000 kcal de pâte à tartiner « pèsera » autant dans votre bilan énergétique que 1.000 kcal de haricots rouges."),
+                   p("Toutefois, votre pourcentage de graisse, d'os et de masse musculaire est en perpétuelle évolution, c'est pourquoi, l'origine des calories ingérées impacte directement votre composition corporelle."),
+                 ),
+                   sidebarPanel(
                    selectInput(inputId = "nutrient", label = "Sélectionner le nutriment :", 
                                choices = c("Protéines" = "proteines", "Glucides" = "glucides", "Lipides" = "lipides")),
                    radioButtons(inputId = "select_level", label = "Sélectionner le niveau : ",
@@ -275,8 +332,25 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                    plotlyOutput("histogram", height = 600)
                  )
              ),
+             
              tabPanel("Micronutriments",
-                      fluidRow(
+                      mainPanel(width = 12,
+                                h4("Minéraux et vitamines ?"),
+                                p("L’alimentation apporte des macronutriments et des micronutriments."),
+                                tags$ul(
+                                  tags$li("Les macronutriments : protéines, lipides et glucides fournissent l’énergie nécessaire au fonctionnement du métabolisme. Ils sont issus des aliments."),
+                                  tags$li("Les micronutriments : vitamines, minéraux et oligoéléments, acides gras contenus dans les aliments ou résultant de la transformation des macronutriments. Ils sont nécessaires pour que nos cellules transforment correctement les macronutriments en énergie.")),
+                                p("La micronutrition est un régime personnalisé. Elle demande donc un effort supplémentaire d'attention, de la disponibilité pour la préparation d'une alimentation à base de produits frais et une adaptation en fonction de l'intensité de vos exercices."),
+                                h4("Quelques conseils"),
+                                p("Pour identifier et suivre d'éventuelles carences, vous pouvez réaliser une prise de sang par an."),
+                                tags$ul(
+                                  tags$li("De bonnes graisses (omega 3) pour les articulations (poisson, oléagineux, huile de colza, lin...)."),
+                                  tags$li("De la viande rouge (fer) 2 fois par semaine et pas 2 jours consécutifs."),
+                                  tags$li("Des légumineuses pour faire le stock de glycogène et apporter des glucides de qualité."),
+                                  tags$li("Des légumes en quantité illimitée pour les fibres et les vitamines."),
+                                  tags$li("Des fruits riches en antioxydants : fruits rouges et oranges en particulier."),
+                                  tags$li("Des aliments probiotiques pour l'équilibre intestinal.")),
+                                ),
                         sidebarPanel(width = 6,
                                      h4("Que dit ce graphique ?"),
                                      actionButton(inputId = "correlation_interpretation_p", label = "Exemple de corrélation positive "),
@@ -288,17 +362,16 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                                title = "L'Eau (n°14) est corrélée négativement avec notamment l'énergie (n°10:13), les Glucides (n°17) et les Lipides (n°18).",
                                                trigger = "hover"),
                                      p(""),
-                                     selectInput(inputId = "number", label = "Sélectionner un numéro :", choices = as.character(seq(10, 76, 1))),
-                                     textOutput("corresponding_name")
+                                     selectInput(inputId = "number", label = "Sélectionner un numéro :", choices = as.character(seq(10, 35, 1))),
+                                     textOutput("corresponding_name"),
+                                     p("Source : Ciqual 2020"),
                         ),
                         mainPanel(width = 6,
                           h4("Matrice de corrélation"),
                           plotlyOutput("corr_Heatmap"),
-                          p("Source : Ciqual 2020"),
-                          p("Pour identifier et suivre d'éventuelles carences, vous pouvez réaliser une prise de sang par an.")
-                        )
                         )
                         ),
+             
              tabPanel("Supplémentation",
                       mainPanel(width = 12,
                                 h4("Gardez à l'esprit qu'il n'existe pas de pilule magique !"),
@@ -349,7 +422,10 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
     )
     )
 
-# Server
+  ##########################
+  ######## SERVER ##########
+  ##########################
+
 server <- function(input, output, session) {
   
   ##########################
@@ -798,16 +874,18 @@ server <- function(input, output, session) {
   # Définir la sortie output$exercices_muscle
   output$exercices_muscle <- renderUI({
     exercices_muscle <- switch(input$muscle,
-                               "Pectoraux" = "DEVELOPPE COUCHE (barre ou halteres)\nDEVELOPPE COUCHE PRISE SERREE (barre ou halteres)\nDEVELOPPE MILITAIRE (barre, halteres, debout ou assis)\nEXTENSIONS TRICEPS (toute prises)\nDEVELOPPE INCLINE (barre, halteres ou machine)\nELEVATION LATERALES (halteres, poulie ou machine)\nBARRE AU FRONT (barre, halteres ou poulie)",
-                               "Abdominaux" = "CRUNCH (toute variantes)\nPLANCHE (toute variantes)\nLEVE DE JAMBES (toute variantes)\nROTATION RUSSE (toute variantes)\nVELO BICYCLETTE",
-                               "Trapèzes" = "SHRUG (barre, haltères ou machine)\nTIRAGE VERTICAL (tout types)\nROWING (tout types)\nDEVELOPPE NUQUE (haltères ou machine)",
-                               "Dorsaux" = "TIRAGE VERTICAL (tout types)\nROWING (tout types)\nPENDLAY ROW\nTIRAGE HORIZONTAL (tout types)\nOISEAU (poulie ou halteres)\nFACEPULL",
-                               "Epaules" = "DEVELOPPE MILITAIRE (barre, halteres, debout ou assis)\nELEVATION LATERALES (halteres, poulie ou machine)\nOISEAU (poulie ou halteres)\nFACEPULL\nDEVELOPPE ARNU (haltères ou machine)",
-                               "Quadriceps" = "SQUAT (tout types)\nFENTES (tout types)\nPRESSE INCLINE / CIRCULAIRE\nLEG EXTENSION\nHACK SQUAT\nHIP THRUST",
-                               "Ischio-jambiers" = "LEG CURL (tout types)\nSOULEVE DE TERRE (ROUMAIN OU TRADI)\nGLUTE HAM RAISE",
-                               "Fessiers" = "HIP THRUST\nDONKEY KICK\nSQUAT (tout types)\nFENTES (tout types)\nGLUTE BRIDGE",
-                               "Mollets" = "EXTENSIONS MOLLETS (un pied ou deux)\nSOULEVE DE TERRE JAMBES TENDUES",
-                               "Bras" = "CURL (toute variantes)\nEXTENSIONS TRICEPS (toute prises)\nDIPS (toute variantes)"
+                               "Pectoraux" = "DEVELOPPE COUCHE (barre ou halteres)\nDEVELOPPE COUCHE PRISE SERREE (barre ou halteres)\nDEVELOPPE INCLINE (barre, halteres ou machine)\nECARTES POULIE (toutes variantes)",
+                               "Abdominaux" = "CRUNCH (toutes variantes)\nPLANCHE (toutes variantes)\nLEVE DE JAMBES (toutes variantes)\nRUSSIAN TWISTS",
+                               "Trapèzes" = "SHRUG (barre, haltères ou machine)\nROWING (coudes ouverts)\nTIRAGE MENTON (barre, haltères ou machine)",
+                               "Dorsaux" = "TRACTIONS (toutes variantes)\nTIRAGE VERTICAL (toutes variantes)\nROWING (toutes variantes)\nPENDLAY ROW\nTIRAGE HORIZONTAL (toutes variantes)\nOISEAU (poulie ou halteres)\nFACEPULL",
+                               "Epaules" = "DEVELOPPE MILITAIRE (barre, halteres, debout ou assis)\nELEVATION LATERALES (halteres, poulie ou machine)\nOISEAU (poulie ou halteres)\nFACEPULL",
+                               "Quadriceps" = "SQUAT (toutes variantes)\nFENTES (toutes variantes)\nPRESSE INCLINE / CIRCULAIRE\nLEG EXTENSION",
+                               "Ischio-jambiers" = "LEG CURL (toutes variantes)\nSOULEVE DE TERRE (ROUMAIN OU TRADI)\nSTEP UP (toutes variantes)",
+                               "Adducteurs" = "MACHINE A ADDUCTIONS\nSQUAT SUMO",
+                               "Fessiers" = "HIP THRUST (toutes variantes)\nSQUAT (toutes variantes)\nFENTES (toutes variantes)",
+                               "Mollets" = "EXTENSIONS MOLLETS (un pied ou deux/assis ou debout)",
+                               "Biceps" = "CURL (toutes variantes)\nTRACTIONS SUPINATION",
+                               "Triceps" = "EXTENSIONS TRICEPS (toutes prises)\nDIPS (toutes variantes)\nSKULL CRUSHERS (toutes variantes)",
     )
     exercices_muscle_list <- strsplit(exercices_muscle, "\n")[[1]]
     exercices_muscle_html <- tagList(lapply(exercices_muscle_list, function(x) {
@@ -864,14 +942,14 @@ server <- function(input, output, session) {
   
   output$corr_Heatmap <- renderPlotly({
     # Conversion des données en une matrice
-    M <- as.matrix(data[, 10:76])
+    M <- as.matrix(data[, 10:35])
     
     # Calcul de la matrice de corrélation
     R <- cor(M)
     
     # Attribution de noms de lignes et de colonnes à la matrice
-    rownames(R) <- as.character(seq(10, 76, 1))
-    colnames(R) <- as.character(seq(10, 76, 1))
+    rownames(R) <- as.character(seq(10, 35, 1))
+    colnames(R) <- as.character(seq(10, 35, 1))
     
     # Filtrage de la matrice pour exclure certaines colonnes et lignes
     indices_to_exclude <- c(10, 11, 12, 14, 15, 24, 29, 30, 33, 35, 37:67)
@@ -890,14 +968,14 @@ server <- function(input, output, session) {
       hoverinfo = "x+y+z"
     ) %>%
       layout(
-        xaxis = list(title = "", tickangle = 45),
+        xaxis = list(title = "", tickangle = 35),
         yaxis = list(title = "")
       )
   })
   
   output$corresponding_name <- renderText({
     # Récupération des noms des colonnes
-    col_names <- colnames(data)[10:76]
+    col_names <- colnames(data)[10:45]
     # Trouver le nom correspondant au numéro sélectionné
     selected_number <- as.numeric(input$number)
     corresponding_name <- col_names[selected_number - 9]
@@ -908,8 +986,7 @@ server <- function(input, output, session) {
   observe({
     addTooltip(session, id = "correlation_interpretation_p",
             title = "Les Lipides (n°18) sont corrélés positivement avec les AG saturés (n°32),
-            AG monoinsaturés (n°32), et AG polyinsaturés (n°34),
-            mais aussi avec les acides oléiques (n°43) et palmitiques (n°41).",
+            AG monoinsaturés (n°32), et AG polyinsaturés (n°34).",
             trigger = "hover")
     addTooltip(session, id = "correlation_interpretation_n",
             title = "L'Eau (n°14) est corrélée négativement avec notamment l'énergie (n°10:13), 
@@ -935,11 +1012,11 @@ server <- function(input, output, session) {
   })
   
   output$mb_result <- renderText({
-    paste("Métabolisme de base : ", round(calculate_mb(), 2), " kcal/jour")
+    paste("MB: ", round(calculate_mb(), 2), " kcal/jour")
   })
   
   output$bcj_result <- renderText({
-    paste("Besoins caloriques journaliers : ", round(calculate_bcj(), 2), " kcal/jour")
+    paste("BCJ: ", round(calculate_bcj(), 2), " kcal/jour")
   })
   
   output$energy_plot <- renderPlotly({
