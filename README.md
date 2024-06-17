@@ -28,3 +28,6 @@ Welcome to Gym Tracker! This Shiny application helps you plan your workout sessi
 ## Installation
 
 To run this application locally, ensure you have R and Shiny installed. Clone this repository and open the `app.R` file in RStudio. Run the application using the `Run App` button in RStudio.
+
+## Application 
+Link online: <https://luciehubert.shinyapps.io/RealGymTracker/>
