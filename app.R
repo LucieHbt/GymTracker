@@ -608,10 +608,14 @@ server <- function(input, output, session) {
       fluidRow(
         lapply(seq_len(length(exercices[[seance]])), function(j) {
           fluidRow(
-            column(3, textInput(paste0("mouvement_", seance, "_", j), "Nom de l'exercice:", value = exercices[[seance]][[j]]$mouvement)),
-            column(3, selectInput(paste0("muscle_", seance, "_", j), "Muscle ciblé:", choices = muscles, selected = exercices[[seance]][[j]]$muscle)),
-            column(3, sliderInput(paste0("series_", seance, "_", j), "Nombre de séries:", min = 1, max = 10, value = exercices[[seance]][[j]]$series)),
-            column(3, sliderInput(paste0("repetitions_", seance, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(exercices[[seance]][[j]]$repetitions_min, exercices[[seance]][[j]]$repetitions_max)))
+            column(3, textInput(paste0("mouvement_", seance, "_", j), "Nom de l'exercice:", 
+                                value = exercices[[seance]][[j]]$mouvement)),
+            column(3, selectInput(paste0("muscle_", seance, "_", j), "Muscle ciblé:", 
+                                  choices = muscles, selected = exercices[[seance]][[j]]$muscle)),
+            column(3, sliderInput(paste0("series_", seance, "_", j), "Nombre de séries:", 
+                                  min = 1, max = 10, value = exercices[[seance]][[j]]$series)),
+            column(3, sliderInput(paste0("repetitions_", seance, "_", j), "Nombre de répétitions:", 
+                                  min = 1, max = 20, value = c(exercices[[seance]][[j]]$repetitions_min, exercices[[seance]][[j]]$repetitions_max)))
           )
         })
       )
@@ -639,10 +643,14 @@ server <- function(input, output, session) {
         fluidRow(
           lapply(seq_len(length(exercices[[seance]])), function(j) {
             fluidRow(
-              column(3, textInput(paste0("mouvement_", seance, "_", j), "Nom de l'exercice:", value = exercices[[seance]][[j]]$mouvement)),
-              column(3, selectInput(paste0("muscle_", seance, "_", j), "Muscle ciblé:", choices = muscles, selected = exercices[[seance]][[j]]$muscle)),
-              column(3, sliderInput(paste0("series_", seance, "_", j), "Nombre de séries:", min = 1, max = 10, value = exercices[[seance]][[j]]$series)),
-              column(3, sliderInput(paste0("repetitions_", seance, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(exercices[[seance]][[j]]$repetitions_min, exercices[[seance]][[j]]$repetitions_max)))
+              column(3, textInput(paste0("mouvement_", seance, "_", j), "Nom de l'exercice:", 
+                                  value = exercices[[seance]][[j]]$mouvement)),
+              column(3, selectInput(paste0("muscle_", seance, "_", j), "Muscle ciblé:", 
+                                    choices = muscles, selected = exercices[[seance]][[j]]$muscle)),
+              column(3, sliderInput(paste0("series_", seance, "_", j), "Nombre de séries:", 
+                                    min = 1, max = 10, value = exercices[[seance]][[j]]$series)),
+              column(3, sliderInput(paste0("repetitions_", seance, "_", j), "Nombre de répétitions:", 
+                                    min = 1, max = 20, value = c(exercices[[seance]][[j]]$repetitions_min, exercices[[seance]][[j]]$repetitions_max)))
             )
           })
         )
