@@ -1,8 +1,9 @@
 ---
+author: "par Lucie HUBERT"
 title: "Programme d'entraînement pour `r input$client_name`"
 output:
   pdf_document:
-    extra_dependencies: ["booktabs"]
+    extra_dependencies: ["booktabs", "fancyhdr"]
 date: "`r format(Sys.Date(), '%d %B %Y')`"
 params:
   client_name: NULL
@@ -13,11 +14,6 @@ params:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(knitr)
-library(kableExtra)
-library(plotly)
-library(gridExtra)
-library(grid)
 
 # Fonction pour créer un tableau récapitulatif de la semaine type d'entraînement
 creer_tableau_recapitulatif <- function(exercise_choices) {
@@ -53,10 +49,10 @@ afficher_exercices <- function(seance, exercices) {
 
   for (i in seq_along(exercices)) {
     cat("Exercice ", i, (":"), "\n")
-    cat(exercices[[i]]$mouvement, "\n")
+cat(paste0("\\textcolor{red}{", exercices[[i]]$mouvement, "}\n"))
     cat("(", exercices[[i]]$muscle,")","\n")
-    cat(" ",exercices[[i]]$series, "\n")
-    cat(" * ", exercices[[i]]$repetitions_min, "à", exercices[[i]]$repetitions_max, ("répétitions"), "\n\n")
+    cat(" \\textcolor{red}{",exercices[[i]]$series, "}\n")
+    cat(" \\textcolor{red}{* ", exercices[[i]]$repetitions_min, "à", exercices[[i]]$repetitions_max, ("répétitions"), "}\n\n")
   }
 }
 ```
@@ -86,5 +82,5 @@ if ("series_summary_par_semaine" %in% names(params$exercices)) {
 
   # Afficher le tableau LaTeX
   print(table_output)
-  }
+}
 ```

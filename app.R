@@ -16,6 +16,11 @@ library(corrplot)
 library(reshape2)
 library(tinytex)
 library(kableExtra)
+library(knitr)
+library(plotly)
+library(gridExtra)
+library(grid)
+library(tinytex)
 
 data <- read.csv(
   file = "Table_Ciqual_2020_FR_2020_07_07.csv",
@@ -85,7 +90,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                 h4("Sélectionnez vos activités"),
                                 uiOutput("exercise_selection"))
                               ),
-                            sidebarPanel(width = 8,
+                            mainPanel(width = 8,
                               h4("Semaine type d'entraînement"),
                               plotlyOutput("plan_summary")
                  )
@@ -146,7 +151,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                       p("Chaque série de travail est une opportunité de progresser. Toutefois, il est fondamental de faire preuve de progressivité."),
                                       p("Uiliser des cycles de progression peut permettre de programmer votre progression de séance en séance. Des cycles de 8 à 12 semaines sont intéressants pour varier votre pratique et mettre l'accent sur un élément de votre physique : force, hypertrophie de certains groupes musculaires, endurance..."),
                                       p("Tenir un cahier d'entraînement peur également faciliter le suivi de vos performances si vous notez vos charges et le RPE (effort perçu) pour chaque série de travail de chaque exercice à chaque séance."),
-                                      h4("4 manières de progresser : "),
+                                      h4("Les principales variables"),
                                       p("Vous ne devez moduler q'une seule variable à la fois, afin de progresser tout en respectant vos capacités de récupération."),
                                          actionButton(inputId = "volume", label = "Volume"),
                                          actionButton(inputId = "intensite", label = "Intensité"),
@@ -164,9 +169,10 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                          bsTooltip(id = "duree",
                                                    title = "Prolongez votre temps sous tension lors de vos exercices (tempo, ralentir la phase excentrique...).",
                                                    trigger = "hover"),
+                                      h4("Suivi des performances"),
                             ),
                             sidebarPanel(width = 6,
-                                         h4("Calculateur théorique du tonnage"),
+                                         h5("Calculateur théorique du tonnage"),
                                          numericInput("set", "Nombre de séries :", min = 0, value = 0),
                                          numericInput("rep", "Nombre de répétitions :", min = 0, max = 20, value = c(6,8)),
                                          numericInput("kg", "Charge utilisée (en kg) :", min = 0, value = 0),
@@ -174,7 +180,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                          tags$p("Note : Le tonnage total est le produit du nombre de séries, de répétitions et de la charge utilisée.", style = "font-size: 90%;")
                             ),
                             sidebarPanel(width = 6,
-                              h4("Calculateur théorique de 1RM"),
+                              h5("Calculateur théorique de 1RM"),
                               numericInput("charge", "Charge soulevée (kg)", value = 100, label = "Entrez la charge :"),
                               numericInput("repetitions", "Nombre de répétitions", value = 3, step = 1, label = "Entrez le nombre de répétitions :"),
                               numericInput("poids_corps", "Poids de corps (kg) (pour exercices lestés)", value = 0, label = "Entrez votre poids de corps :"),
@@ -189,7 +195,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                     p("Chaque morphologie est unique. C'est pourquoi, le choix des exercices doit être individuel. Il ne s'agit pas de reprendre le programme tout fait d'un ami ou celui de votre influenceur préféré. Car, certains de ces exercices vous iront, mais d'autres beaucoup moins."),
                                     p("Il existe de grandes inégalités entre chaque personne pour les mêmes exercices. Si un exercice ne vous convient pas, parce que son exécution vous fait mal, il est inutile d'insister : mettez cet exercice de côté."),
                                     p("Choisissez vos exercices selon votre morphologie et selon vos objectifs, dirigez vous vers des exercices agréables à exécuter et utiles."),
-                                    p("Il existe une distinction qui permet déjà de classer les exercices en deux groupes : "),
+                                    h4("Deux grands groupes d'exerices"),
                                     tags$ul(
                                       tags$li("Les exercices polyarticulaires : permettent de soulever lourd avec une forte sollicitation des muscles (forte tension mécanique) en peu de temps (faible stress métabolique), mais ils sont fatiguants et ne permettent pas forcément de mettre un muscle au centre des priorités."),
                                       tags$li("Les exercices monoarticulaires ou d'isolation : sollicitent moins de muscles (faible tension mécanique), mais demandent moins d'énergie, il donc possible de cibler des muscles en particulier plus longtemps (fort stress métabolique).")),
@@ -268,11 +274,24 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                         title = "Votre travail est extrêmement physique ou bien vous vous considérez comme un athlète.",
                                         trigger = "hover"),
                               p("Par exemple, si vous êtes étudiant et que vous faites du sport 4 fois par semaine, alors vous êtes considéré comme étant « actif »."),
-                              tags$ul(
-                                tags$li("Maintenir votre poids : consommez ce que vous dépensez."),
-                                tags$li("Prendre du poids :	\u2197 de 15% votre apport calorique (glucides) pendant 2 semaines, puis 	\u2197 progressivement de 10% toutes les 2 semaines."),
-                                tags$li("Perdre du poids : \u2198 de 15% votre apport calorique (glucides) pendant 2 semaines, puis \u2198 progressivement de 10% toutes les 2 semaines."))
-                              ),
+                              h4("Et pour atteindre mon objectif ?"),
+                              actionButton(inputId = "main", label = "Maintenir mon poids"),
+                              actionButton(inputId = "prendre", label = "Prendre du poids"),
+                              actionButton(inputId = "perdre", label = "Perdre du poids"),
+                              bsTooltip(id = "main",
+                                        title = "Consommez ce que vous dépensez.",
+                                        trigger = "hover"),
+                              bsTooltip(id = "prendre",
+                                        title = "\u2197 de 15% votre apport calorique pendant 2 semaines, puis 	\u2197 progressivement de 10% toutes les 2 semaines.",
+                                        trigger = "hover"),
+                              bsTooltip(id = "perdre",
+                                        title = "\u2198 de 15% votre apport calorique (glucides) pendant 2 semaines, puis \u2198 progressivement de 10% toutes les 2 semaines.",
+                                        trigger = "hover"),
+                              h4("Comment calculer mes besoins énergétiques ?"),
+                              p("	\ud83d\udce2 ATTENTION ce ne sont que des estimations théoriques, vous devez ajuster le chiffre obtenu selon vos résultats."),
+                              
+                              
+                          ),
                             sidebarPanel(width = 3,
                               selectInput("sex", "Sexe", choices = c("Homme", "Femme")),
                               numericInput("age", "Âge (années)", value = 22, min = 0),
@@ -293,7 +312,6 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                 column(6,
                                        h4("Dépense Énergétique Quotidienne"),
                                        plotlyOutput("energy_plot"),
-                                       p("ATTENTION ce ne sont que des estimations théoriques, vous devez ajuster ce chiffre selon vos résultats."),
                                 ),
                                 column(6,
                                        h4(textOutput("macro_title")),
@@ -307,11 +325,20 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                    p("Nos apports énergétiques nous proviennent uniquement de ce que nous mangeons et buvons."),
                    p("Les calories issues de l’alimentation existent principalement sous 3 formes, appelés macronutriments : les protéines, les glucides et les lipides."),
                    tags$ul(
-                     tags$li("1 g de protéine = 4 Cal."),
-                     tags$li("1 g de glucides = 4 Cal."),
-                     tags$li("1 g de lipides = 9 Cal.")),
+                     tags$li("	\ud83c\udf73 1 g de protéine = 4 Cal."),
+                     tags$li("	\ud83c\udf5a 1 g de glucides = 4 Cal."),
+                     tags$li("	\ud83e\udd51 1 g de lipides = 9 Cal.")),
                    p("Pensez au fait qu'aucun aliment ne fait grossir ou mincir en soi. L’effet d’une calorie sur notre poids est le même : 1.000 kcal de pâte à tartiner « pèsera » autant dans votre bilan énergétique que 1.000 kcal de haricots rouges."),
                    p("Toutefois, votre pourcentage de graisse, d'os et de masse musculaire est en perpétuelle évolution, c'est pourquoi, l'origine des calories ingérées impacte directement votre composition corporelle."),
+                   h4("Comment ajuster mes macronutriments en perte de poids ?"),
+                   p("En perte de poids, les protéines jouent un rôle crucial en préservant votre masse musculaire, tandis que les lipides sont essentiels pour maintenir le bon fonctionnement de vos fonctions hormonales et cognitives. C'est pourquoi il est préférable de réduire votre apport calorique en diminuant vos apports glucidiques."),
+                   p("Vous pourriez ressentir une baisse d'énergie, mais vos fonctions vitales et reproductives resteront opérationnelles."),
+                   h4("Où trouver mes macronutriments ?"),
+                   p("\ud83d\udd0e Pour faciliter un bon tracking de vos calories et de vos nutriments, utilisez des applications comme ",
+                     a("MyFitnessPal", href = "https://www.myfitnesspal.com/fr"),
+                     " ou encore ",
+                     a("Yazio", href = "https://www.yazio.com/fr"),
+                     ".")
                  ),
                    sidebarPanel(
                    selectInput(inputId = "nutrient", label = "Sélectionner le nutriment :", 
@@ -321,11 +348,6 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                             "Sous-groupes" = "alim_ssssgrp_nom_fr")),
                    colourInput(inputId = "hist_color", label = "Choisir une couleur", value = "#C43413"),
                    p("Source : Ciqual 2020"),
-                   p("Pour faciliter un bon tracking de vos calories et de vos nutriments, utilisez des applications comme ",
-                     a("MyFitnessPal", href = "https://www.myfitnesspal.com/fr"),
-                     " ou encore ",
-                     a("Yazio", href = "https://www.yazio.com/fr"),
-                     ".")
                  ),
                  mainPanel(
                    uiOutput("histo_title"),
@@ -337,10 +359,10 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                       mainPanel(width = 12,
                                 h4("Minéraux et vitamines ?"),
                                 p("L’alimentation apporte des macronutriments et des micronutriments."),
+                                p("La micronutrition demande de la vigilance et de la disponibilité pour la préparation d'une alimentation à base de produits frais adaptée à l'intensité de vos exercices."),
                                 tags$ul(
                                   tags$li("Les macronutriments : protéines, lipides et glucides fournissent l’énergie nécessaire au fonctionnement du métabolisme. Ils sont issus des aliments."),
                                   tags$li("Les micronutriments : vitamines, minéraux et oligoéléments, acides gras contenus dans les aliments ou résultant de la transformation des macronutriments. Ils sont nécessaires pour que nos cellules transforment correctement les macronutriments en énergie.")),
-                                p("La micronutrition est un régime personnalisé. Elle demande donc un effort supplémentaire d'attention, de la disponibilité pour la préparation d'une alimentation à base de produits frais et une adaptation en fonction de l'intensité de vos exercices."),
                                 h4("Quelques conseils"),
                                 p("Pour identifier et suivre d'éventuelles carences, vous pouvez réaliser une prise de sang par an."),
                                 tags$ul(
@@ -350,6 +372,9 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                   tags$li("Des légumes en quantité illimitée pour les fibres et les vitamines."),
                                   tags$li("Des fruits riches en antioxydants : fruits rouges et oranges en particulier."),
                                   tags$li("Des aliments probiotiques pour l'équilibre intestinal.")),
+                                h4("Où trouver mes micronutriments ?"),
+                                p("Ici, vous pouvez observer certains micronutriments qui se trouvent généralement dans les protéines, glucides et lipides.")
+                                
                                 ),
                         sidebarPanel(width = 6,
                                      h4("Que dit ce graphique ?"),
@@ -365,6 +390,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                      selectInput(inputId = "number", label = "Sélectionner un numéro :", choices = as.character(seq(10, 35, 1))),
                                      textOutput("corresponding_name"),
                                      p("Source : Ciqual 2020"),
+                                     
                         ),
                         mainPanel(width = 6,
                           h4("Matrice de corrélation"),
@@ -793,10 +819,7 @@ server <- function(input, output, session) {
         client_name = input$client_name,
         series_summary_par_semaine = input$series_summary_par_semaine
       )
-      
-      # Nettoyer l'environnement de tricotage si nécessaire
-      rm(list = ls(pattern = "^params"), envir = knitr::knit_global())
-      
+
       # Rendre le rapport en utilisant les paramètres définis
       rmarkdown::render(input = tempReport, output_file = file, params = params_render)
     }
