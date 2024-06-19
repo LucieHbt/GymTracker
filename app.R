@@ -1,6 +1,6 @@
 
 ##########################
-######## GLOBAL ##########
+####### GYM TRACKER ######
 ##########################
 
 library(shiny)
@@ -403,8 +403,10 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                                 h4("Gardez à l'esprit qu'il n'existe pas de pilule magique !"),
                                 p("Certains suppléments peuvent vous aider à combler des lacunes alimentaires et à soutenir vos entraînements, mais avant tout, il est fondamental d'affiner votre programme d'entraînement et de mettre en place un plan nutritionnel en phase avec vos objectifs."),
                                 p("Ne vous laissez pas piéger par le marketing et les publicités aguicheuses, tous les compléments et toutes les marques ne se valent pas !"),
-                                p("Pour choisir les bons compléments qui prennent soin tant de votre santé, que de celle de la planète, utilisez le ScanNuts de ",
-                                  a("Innutswetrust.", href = "https://innutswetrust.fr/"),
+                                p("Pour choisir les bons compléments qui prennent soin tant de votre santé, que de celle de la planète, vous pouvez utiliser le ScanNuts de ",
+                                  a("Innutswetrust.", href = "https://innutswetrust.fr/")),
+                                p("Pour en apprendre plus sur les aspects scientifiques des compléments alimentaires, vous pouvez aller sur le site ",
+                                  a("Examine.", href = "https://examine.com/supplements/")
                                 ),
                         h4("Quels compléments alimentaires ?"),
                         actionButton(inputId = "pré", label = "Pré-entraînement"),
@@ -560,7 +562,7 @@ server <- function(input, output, session) {
     # Capture existing values
     valeurs_exercices_existants <- get_exercise_values(seance)
     
-    # Add a new exercise with default values
+    # Check if less than 7 exercises already exist
     if (length(valeurs_exercices_existants) < 7) {
       exercices[[seance]] <- c(valeurs_exercices_existants, list(
         list(
@@ -571,6 +573,9 @@ server <- function(input, output, session) {
           repetitions_max = 8
         )
       ))
+    } else {
+      # Show notification if trying to add more than 7 exercises
+      showNotification("Vous avez atteint le nombre maximal d'exercices !", type = "warning")
     }
   })
   
@@ -606,7 +611,7 @@ server <- function(input, output, session) {
   output$seance_select <- renderUI({
     if (!is.null(input$seances_par_semaine) && is.numeric(input$seances_par_semaine) && input$seances_par_semaine >= 1) {
       choices <- as.character(seq_len(input$seances_par_semaine))
-      selectInput("seance_select", "Choisir une séance :", choices = choices)
+      selectInput("seance_select", "Choisir une séance à éditer :", choices = choices)
     }
   })
   
@@ -617,46 +622,26 @@ server <- function(input, output, session) {
     
     lapply(seq_len(seances), function(i) {
       output[[paste0("exercices_ui_", i)]] <- renderUI({
-        if (!is.null(exercices[[as.character(i)]])) {
-          fluidRow(
-            lapply(seq_along(exercices[[as.character(i)]]), function(j) {
-              mouvement_val <- ifelse(is.null(exercices[[as.character(i)]][[j]]$mouvement), "", exercices[[as.character(i)]][[j]]$mouvement)
-              muscle_val <- ifelse(is.null(exercices[[as.character(i)]][[j]]$muscle), "", exercices[[as.character(i)]][[j]]$muscle)
-              series_val <- ifelse(is.null(exercices[[as.character(i)]][[j]]$series), 3, exercices[[as.character(i)]][[j]]$series)
-              repetitions_min_val <- ifelse(is.null(exercices[[as.character(i)]][[j]]$repetitions_min), 6, exercices[[as.character(i)]][[j]]$repetitions_min)
-              repetitions_max_val <- ifelse(is.null(exercices[[as.character(i)]][[j]]$repetitions_max), 8, exercices[[as.character(i)]][[j]]$repetitions_max)
-              
-              fluidRow(
-                column(3, textInput(paste0("mouvement_", i, "_", j), "Nom de l'exercice:", value = mouvement_val)),
-                column(3, selectInput(paste0("muscle_", i, "_", j), "Muscle ciblé:", choices = muscles, selected = muscle_val)),
-                column(3, sliderInput(paste0("series_", i, "_", j), "Nombre de séries:", min = 1, max = 10, value = series_val)),
-                column(3, sliderInput(paste0("repetitions_", i, "_", j), "Nombre de répétitions:", min = 1, max = 20, value = c(repetitions_min_val, repetitions_max_val)))
+        seance <- as.character(i)
+        
+        if (!is.null(exercices[[seance]])) {
+          lapply(seq_along(exercices[[seance]]), function(j) {
+            fluidRow(
+              column(3,
+                     textInput(paste0("mouvement_", seance, "_", j), "Mouvement", value = exercices[[seance]][[j]]$mouvement)
+              ),
+              column(3,
+                     selectInput(paste0("muscle_", seance, "_", j), "Muscle ciblé", choices = muscles, selected = exercices[[seance]][[j]]$muscle)
+              ),
+              column(1,
+                     numericInput(paste0("series_", seance, "_", j), "Séries", value = exercices[[seance]][[j]]$series, min = 1, max = 10)
+              ),
+              column(5,
+                     sliderInput(paste0("repetitions_", seance, "_", j), "Répetitions", min = 1, max = 20, value = c(exercices[[seance]][[j]]$repetitions_min, exercices[[seance]][[j]]$repetitions_max))
               )
-            })
-          )
+            )
+          })
         }
-      })
-    })
-  })
-  
-  # Observer pour mettre à jour les valeurs des exercices en cas de changement d'inputs
-  observe({
-    req(input$seances_par_semaine)
-    lapply(seq_len(input$seances_par_semaine), function(i) {
-      lapply(seq_along(exercices[[as.character(i)]]), function(j) {
-        observeEvent(input[[paste0("mouvement_", i, "_", j)]], {
-          exercices[[as.character(i)]][[j]]$mouvement <- input[[paste0("mouvement_", i, "_", j)]]
-        })
-        observeEvent(input[[paste0("muscle_", i, "_", j)]], {
-          exercices[[as.character(i)]][[j]]$muscle <- input[[paste0("muscle_", i, "_", j)]]
-        })
-        observeEvent(input[[paste0("series_", i, "_", j)]], {
-          exercices[[as.character(i)]][[j]]$series <- input[[paste0("series_", i, "_", j)]]
-        })
-        observeEvent(input[[paste0("repetitions_", i, "_", j)]], {
-          exercices[[as.character(i)]][[j]]$repetitions_min <- input[[paste0("repetitions_", i, "_", j)]][1]
-          exercices[[as.character(i)]][[j]]$repetitions_max <- input[[paste0("repetitions_", i, "_", j)]][2]
-        })
       })
     })
   })
@@ -703,10 +688,10 @@ server <- function(input, output, session) {
     }
   })
   
+  # Générer le graphique pie-chart des séries par muscle
   output$set_pie_chart <- renderPlotly({
     if (!is.null(exercices$series_summary_par_semaine) && nrow(exercices$series_summary_par_semaine) > 0) {
-      plot_ly(exercices$series_summary_par_semaine, labels = ~Muscle, values = ~Series, type = 'pie') %>%
-        layout(title = "Total des séries par muscle")
+      plot_ly(exercices$series_summary_par_semaine, labels = ~Muscle, values = ~Series, type = 'pie')
     } else {
       plot_ly() %>%
         layout(title = "Aucune donnée disponible")
