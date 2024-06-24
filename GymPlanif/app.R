@@ -49,7 +49,7 @@ ui <- fluidPage(theme = shinytheme("cyborg"),
                         uiOutput("sous_onglets"),
                       )
              ),
-             tabPanel("Récapitulatif",
+             tabPanel("	\ud83d\udcdd Récapitulatif",
                       mainPanel(
                         downloadButton("downloadPdf", "Sauvegardez votre semaine type en PDF"),
                         tableOutput("recap_table")
