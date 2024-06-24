@@ -1,15 +1,15 @@
 ---
-author: "par Lucie HUBERT"
 title: "Programme d'entraînement pour `r input$client_name`"
 output:
   pdf_document:
     extra_dependencies: ["booktabs", "fancyhdr"]
 date: "`r format(Sys.Date(), '%d %B %Y')`"
 params:
-  client_name: NULL
-  exercices: NULL
-  exercise_choices: NULL
-  series_summary_par_semaine: NULL
+    seances: NULL
+    client_name: NULL
+    exercices: NULL
+    exercise_choices: NULL
+    series_summary_par_semaine: NULL
 ---
 
 ```{r setup, include=FALSE}
@@ -38,6 +38,9 @@ creer_tableau_recapitulatif <- function(exercise_choices) {
   return(tableau)
 }
 
+# Use params$seances to access the exercises_data object
+seances <- params$seances
+
 # Fonction pour afficher les exercices pour chaque séance
 afficher_exercices <- function(seance, exercices) {
   if (length(exercices) > 0 && any(sapply(exercices, function(x) is.list(x) && length(x) > 0))) {
@@ -48,8 +51,8 @@ afficher_exercices <- function(seance, exercices) {
         cat("Exercice ", i, " : \n")
         cat("\\textcolor{red}{", exercices[[i]]$mouvement, "}\n")
         cat("(", exercices[[i]]$muscle, ")\n")
-        cat("\\textcolor{red}{", exercices[[i]]$series, "}")
-        cat("\\textcolor{red}{*", exercices[[i]]$repetitions_min, " à ", exercices[[i]]$repetitions_max, " répétitions}\n\n")
+        cat("\\textcolor{red}{", exercices[[i]]$series, "* }")
+        cat("\\textcolor{red}{ ", exercices[[i]]$repetitions[[1]], " à ", exercices[[i]]$repetitions[[2]], " répétitions}\n\n")
       }
     }
   }
@@ -64,31 +67,31 @@ print(kable(tableau_recap, format = "latex", booktabs = TRUE))
 
 # Répartition des séances
 ```{r echo=FALSE, results='asis'}
-for (seance in seq_along(params$exercices)) {
-  afficher_exercices(seance, params$exercices[[seance]])
+for (seance in seq_along(seances)) {
+  afficher_exercices(seance, seances[[seance]])
 }
 ```
 
 # Répartition du volume d'entraînement par groupe musculaire
 ```{r echo=FALSE, results='asis'}
-if ("series_summary_par_semaine" %in% names(params$exercices)) {
-  summary_df <- params$exercices$series_summary_par_semaine
+if (!is.null(params$series_summary_par_semaine)) {
+  summary_df <- params$series_summary_par_semaine
 
-# Création du tableau en LaTeX avec kable
-table_output <- kable(summary_df, format = "latex", booktabs = TRUE)
+  # Création du tableau en LaTeX avec kable
+  table_output <- kable(summary_df, format = "latex", booktabs = TRUE)
 
-# Afficher le tableau LaTeX
-cat(table_output)
+  # Afficher le tableau LaTeX
+  cat(table_output)
 
-# Création du graphique pie-chart
-pie_chart <- ggplot(summary_df, aes(x = "", y = Series, fill = Muscle)) +
-  geom_bar(width = 1, stat = "identity") +
-  coord_polar("y", start = 0) +
-  labs(fill = "Muscle") +
-  theme_void() +
-  theme(legend.position = "right")
+  # Création du graphique pie-chart
+  pie_chart <- ggplot(summary_df, aes(x = "", y = Series, fill = Muscle)) +
+    geom_bar(width = 1, stat = "identity") +
+    coord_polar("y", start = 0) +
+    labs(fill = "Muscle") +
+    theme_void() +
+    theme(legend.position = "right")
 
-# Affichage côte à côte avec grid.arrange
-grid.arrange(pie_chart, ncol = 1, heights = c(0.5, 0.5))
+  # Affichage du graphique
+  print(pie_chart)
 }
 ```
