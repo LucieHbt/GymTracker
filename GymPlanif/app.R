@@ -4,12 +4,18 @@
 ###########################
 
 library(shiny)
-library(shinythemes)
 library(shinyBS)
+library(shinyjs)
 library(shinyWidgets)
+library(shinyalert)
+library(bslib)
+library(bsicons)
 library(plotly)
 library(gridExtra)
 library(kableExtra)
+library(slickR)
+library(bs4Dash)
+library(waiter)
 
 # Define predefined lists
 muscles <- c("Pectoraux", "Abdominaux", "Trapèzes", "Dorsaux", "Epaules", "Quadriceps", "Ischio-jambiers", "Fessiers", "Adducteurs", "Mollets", "Biceps", "Triceps")
@@ -18,56 +24,121 @@ muscles <- c("Pectoraux", "Abdominaux", "Trapèzes", "Dorsaux", "Epaules", "Quad
 ############ UI ############
 ############################
 
-
-ui <- fluidPage(theme = shinytheme("cyborg"),
-                shinythemes::themeSelector(),
-  navbarPage("Gym Planif'",
-             tabPanel("\ud83c\udfcb\ufe0f\u200d\u2640 Organisation",
-                      sidebarPanel(
-                        width = 4,
-                        h4("Sélectionnez vos activités"),
-                        uiOutput("exercise_selection")
-                      ),
-                      mainPanel(
-                        width = 8,
-                        h4("Semaine type d'entraînement"),
-                        plotlyOutput("plan_summary")
-                      )
-             ),
-             tabPanel("\ud83c\udfc6 Entraînement",
-                      sidebarPanel(
-                        sliderInput("seances_par_semaine", "Nombre de séances par semaine : ", min = 1, max = 7, value = 4),
-                        uiOutput("seance_select"),
-                        actionButton("ajouter_ligne", "Ajouter un exercice", icon = icon("plus")),
-                        actionButton("supprimer_ligne", "Supprimer un exercice", icon = icon("minus")),
-                        h4("Volume par groupe musculaire"),
-                        plotlyOutput("set_pie_chart"),
-                        
-                      ),
-                      mainPanel(
-                        width = 8,
-                        uiOutput("sous_onglets"),
-                      )
-             ),
-             tabPanel("	\ud83d\udcdd Récapitulatif",
-                      mainPanel(
-                        downloadButton("downloadPdf", "Sauvegardez votre semaine type en PDF"),
-                        tableOutput("recap_table")
-                      )
-             )
+ui <- dashboardPage(
+  preloader = list(html = tagList(spin_1(), "Loading ..."), color = "black"),
+  header = dashboardHeader(
+    rightUi = tagList(
+      userOutput("user")
+    )
   ),
-  tags$footer(
-    style = "text-align: right; font-size: 12px;",
-    "Développé par ", tags$em("Lucie HUBERT"), " - ", format(Sys.Date(), "%Y")
+  
+  sidebar = dashboardSidebar(
+    collapsed = TRUE,
+    sidebarUserPanel(
+      image = "brand.png",
+      name = "Gym Planif' !"),
+    
+    sidebarMenu(
+      menuItem(
+        text = HTML("\U0001F3CB\U0000FE0F\u200D\u2640 Organisation"),
+        tabName = "org",
+        icon = icon("circle")
+      ),
+      menuItem(
+        text = HTML("\U0001F3C6 Entraînement"),
+        tabName = "train",
+        icon = icon("circle")
+      ),
+      menuItem(
+        text = HTML("\U0001F4DD Récapitulatif"),
+        tabName = "recap",
+        icon = icon("circle")
+      )
+    )
+  ),
+  
+  body = dashboardBody(
+    chooseSliderSkin("Round"),
+    includeCSS("style.css"),
+    tabItems(
+      # Tab 1: Organisation
+      tabItem(tabName = "org",
+        box(
+          width = 12,
+          status = "primary",
+          title = "Semaine type d'entraînement",
+          p("Cliquez sur l'engrenage pour selectionner vos activités"),
+          sidebar = boxSidebar(width = 25,
+            id = "mySidebar",
+            uiOutput("exercise_selection")
+          ),
+          plotlyOutput("plan_summary")
+          )
+        ),
+      
+      # Tab 2: Entraînement
+      tabItem(tabName = "train",
+              fluidRow(
+                column(
+                  width = 8,
+                  uiOutput("sous_onglets")
+                ),
+                column(
+                  width = 4,
+                  box( width = 12,
+                    title = "Organisation des séances",
+                    status = "primary",
+                    sliderInput("seances_par_semaine", "Nombre de séances par semaine : ", min = 1, max = 7, value = 4),
+                    uiOutput("seance_select"),
+                    actionButton("ajouter_ligne", "Ajouter un exercice", icon = icon("plus")),
+                    actionButton("supprimer_ligne", "Supprimer un exercice", icon = icon("minus")),
+                    plotlyOutput("set_pie_chart")
+                  )
+                )
+              )
+      ),
+      # Tab 3: Récapitulatif
+      tabItem(tabName = "recap",
+              fluidRow(
+                downloadButton("downloadPdf", "Sauvegardez !"),
+                box(width = 12,
+                    title = "Vue globale de vos séances",
+                    status = "primary",
+                    uiOutput("recap_table")
+                )
+              )
+      )
+    ),
+    controlbar = dashboardControlbar(
+      collapsed = FALSE,
+      div(class = "p-3", skinSelector()), 
+      pinned = FALSE
+    )
   )
 )
-
-
+  
 ###########################
 ######### SERVER ##########
 ###########################
 
 server <- function(input, output, session) {
+  
+  output$user <- renderUser({
+    dashboardUser(
+      name = "Lucie HUBERT",
+      image = "https://media.licdn.com/dms/image/D4E03AQErycNPVoJRhw/profile-displayphoto-shrink_800_800/0/1666273099421?e=1726099200&v=beta&t=EierabsopiNJWADMmh9YLrOzBQyShQ_6GGZucBfJ4RU",
+      title = "Etudiante",
+      fluidRow(
+        column(
+          width = 12,
+          align = "center",
+          tags$a(href = "www.linkedin.com/in/lucie-hubert-74490b233", 
+                 HTML('<i class="fab fa-linkedin fa-2x"></i>'), 
+                 style = "color: #0077B5; text-decoration: none; margin-left: 10px;")
+          ),
+          )
+      )
+    })
   
   ##########################
   ######## ADHESION ########
@@ -101,7 +172,7 @@ server <- function(input, output, session) {
     jours <- c("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
     lapply(jours, function(day) {
       selectInput(paste0("exercise_", day), paste("Séance du", day, ":"),
-                  choices = c("Musculation", "Course", "Natation", "Cyclisme", "Mobilité", "Yoga", "Repos"),
+                  choices = c("PUSH", "PULL", "LEGS", "UPPER", "LOWER", "RUN", "REST"),
                   selected = exercise_choices[[day]])
     })
   })
@@ -113,7 +184,7 @@ server <- function(input, output, session) {
                        Exercices_day = exercises_per_day)
     
     p <- ggplot(data, aes(x = Jour, fill = Exercices_day)) +
-      geom_bar() +
+      geom_bar(stat = "count") +  # Utilisation de stat = "count" pour compter les occurrences
       theme_minimal() +
       theme(legend.position = "none",
             axis.title.x = element_blank(),
@@ -122,7 +193,12 @@ server <- function(input, output, session) {
             axis.ticks.y = element_blank()) +
       scale_x_discrete(labels = jours)
     
-    ggplotly(p)
+    # Convertir le ggplot en plotly
+    ggplotly(p) %>%
+      layout(
+        paper_bgcolor = "rgba(0,0,0,0)",  # Couleur de l'arrière-plan transparente
+        plot_bgcolor = "rgba(0,0,0,0)"    # Couleur de la zone de traçage transparente
+      )
   })
   
   ##############################
@@ -207,17 +283,140 @@ server <- function(input, output, session) {
     }
   })
   
-  # Generate the UI for the exercises of each session
+  # Selection of the session
+  output$seance_select <- renderUI({
+    if (!is.null(input$seances_par_semaine) && is.numeric(input$seances_par_semaine) && input$seances_par_semaine >= 1) {
+      choices <- as.character(seq_len(input$seances_par_semaine))
+      selectInput("seance_select", "Choisir une séance à éditer :", choices = choices)
+    }
+  })
+  
+  # Observer to show notification when a session is selected
+  observeEvent(input$seance_select, {
+    showNotification(paste("Vous avez sélectionné la séance", input$seance_select), type = "warning")
+  })
+  
+  # Liste de couleurs pour les accordions
+  couleurs_accordions <- c("primary", "success", "info", "warning", "danger")
+  
+  # Generate UI for each session's exercises
   output$sous_onglets <- renderUI({
     if (!is.null(input$seances_par_semaine) && input$seances_par_semaine > 0) {
-      tab_list <- lapply(seq_len(input$seances_par_semaine), function(i) {
-        seance_number <- i  # Utiliser le numéro de la séance pour le nom de l'onglet
-        tabPanel(paste("Séance", seance_number), value = paste0("sous_onglet_", seance_number),
-                 uiOutput(paste0("exercices_ui_", seance_number))
+      lapply(seq_len(input$seances_par_semaine), function(i) {
+        seance_number <- i
+        
+        accordion(
+          id = paste0("accordion_seance_", seance_number),
+          accordionItem(
+            title = paste("Séance", seance_number),
+            status = sample(couleurs_accordions, 1),  # Couleur aléatoire
+            collapsed = TRUE,
+            uiOutput(paste0("exercices_ui_", seance_number))
+          )
         )
       })
-      do.call(tabsetPanel, c(type = "tabs", tab_list))
     }
+  })
+  
+  # Observer to update exercise UI for each session
+  observe({
+    req(input$seances_par_semaine)
+    seances <- input$seances_par_semaine
+    
+    lapply(seq_len(seances), function(i) {
+      output[[paste0("exercices_ui_", i)]] <- renderUI({
+        seance <- as.character(i)
+        
+        if (!is.null(exercices[[seance]])) {
+          lapply(seq_along(exercices[[seance]]), function(j) {
+            fluidRow(
+              column(3,
+                     textInput(paste0("mouvement_", seance, "_", j), "Mouvement", value = exercices[[seance]][[j]]$mouvement)
+              ),
+              column(2,
+                     selectInput(paste0("muscle_", seance, "_", j), "Muscle ciblé", choices = muscles, selected = exercices[[seance]][[j]]$muscle)
+              ),
+              column(2,
+                     numericInput(paste0("series_", seance, "_", j), "Séries", value = exercices[[seance]][[j]]$series, min = 1, max = 10)
+              ),
+              column(5,
+                     {
+                       repetitions_min <- exercices[[seance]][[j]]$repetitions_min
+                       repetitions_max <- exercices[[seance]][[j]]$repetitions_max
+                       # Utiliser des valeurs par défaut si les valeurs sont NULL
+                       if (is.null(repetitions_min)) repetitions_min <- 6
+                       if (is.null(repetitions_max)) repetitions_max <- 8
+                       sliderInput(paste0("repetitions_", seance, "_", j), "Répetitions", min = 1, max = 20, value = c(repetitions_min, repetitions_max))
+                     }
+              )
+            )
+          })
+        }
+      })
+    })
+  })
+  
+  # Dummy data for exercices reactiveValues
+  observe({
+    seances <- input$seances_par_semaine
+    
+    lapply(seq_len(seances), function(i) {
+      seance <- as.character(i)
+      exercices[[seance]] <- replicate(1, list(
+        mouvement = paste("Mouvement", i),
+        muscle = sample(muscles, 1),
+        series = sample(1:10, 1),
+        repetitions_min = sample(1:10, 1),
+        repetitions_max = sample(11:20, 1)
+      ), simplify = FALSE)
+    })
+  })
+  
+  # Generate the pie chart of sets per muscle
+  output$set_pie_chart <- renderPlotly({
+    if (!is.null(exercices$series_summary_par_semaine) && nrow(exercices$series_summary_par_semaine) > 0) {
+      plot_ly(exercices$series_summary_par_semaine, labels = ~Muscle, values = ~Series, type = 'pie') %>%
+        layout(
+          showlegend = FALSE,  # Remove legend
+          paper_bgcolor = "rgba(0,0,0,0)",  # Transparent background
+          plot_bgcolor = "rgba(0,0,0,0)"    # Transparent plot area background
+        )
+    } else {
+      plot_ly() %>%
+        layout(
+          title = "Aucune donnée disponible",
+          paper_bgcolor = "rgba(0,0,0,0)",  # Transparent background
+          plot_bgcolor = "rgba(0,0,0,0)"    # Transparent plot area background
+        )
+    }
+  })
+  
+  # Récupérer le contenu des séances
+  get_seances <- reactive({
+    seances <- list()
+    for (i in seq_len(input$seances_par_semaine)) {
+      seance <- list()
+      j <- 1
+      repeat {
+        mouvement_input <- paste0("mouvement_", i, "_", j)
+        muscle_input <- paste0("muscle_", i, "_", j)
+        series_input <- paste0("series_", i, "_", j)
+        repetitions_input <- paste0("repetitions_", i, "_", j)
+        if (!is.null(input[[mouvement_input]])) {
+          seance[[j]] <- list(
+            mouvement = input[[mouvement_input]],
+            muscle = input[[muscle_input]],
+            series = input[[series_input]],
+            repetitions = c(input[[repetitions_input]][1], input[[repetitions_input]][2])
+          )
+          j <- j + 1
+        } else {
+          break
+        }
+      }
+      seances[[i]] <- seance
+    }
+    return(seances)
   })
   
   # Generate a list of tables, one for each session
@@ -276,53 +475,20 @@ server <- function(input, output, session) {
     
     # Generate the UI for the pairs of tables
     table_pair_uis <- lapply(table_pairs, function(table_pair) {
-      fluidRow(
-        column(6, table_pair[[1]]),
-        column(6, table_pair[[2]])
-      )
+      if (length(table_pair) == 2) {
+        fluidRow(
+          column(6, table_pair[[1]]),
+          column(6, table_pair[[2]])
+        )
+      } else {
+        fluidRow(
+          column(6, table_pair[[1]])
+        )
+      }
     })
     
     # Return the UI for the pairs of tables
     return(tagList(table_pair_uis))
-  })
-
-  # Selection of the session
-  output$seance_select <- renderUI({
-    if (!is.null(input$seances_par_semaine) && is.numeric(input$seances_par_semaine) && input$seances_par_semaine >= 1) {
-      choices <- as.character(seq_len(input$seances_par_semaine))
-      selectInput("seance_select", "Choisir une séance à éditer :", choices = choices)
-    }
-  })
-  
-  # Generate the UI for the exercises of each session
-  observe({
-    req(input$seances_par_semaine)
-    seances <- input$seances_par_semaine
-    
-    lapply(seq_len(seances), function(i) {
-      output[[paste0("exercices_ui_", i)]] <- renderUI({
-        seance <- as.character(i)
-        
-        if (!is.null(exercices[[seance]])) {
-          lapply(seq_along(exercices[[seance]]), function(j) {
-            fluidRow(
-              column(3,
-                     textInput(paste0("mouvement_", seance, "_", j), "Mouvement", value = exercices[[seance]][[j]]$mouvement)
-              ),
-              column(3,
-                     selectInput(paste0("muscle_", seance, "_", j), "Muscle ciblé", choices = muscles, selected = exercices[[seance]][[j]]$muscle)
-              ),
-              column(1,
-                     numericInput(paste0("series_", seance, "_", j), "Séries", value = exercices[[seance]][[j]]$series, min = 1, max = 10)
-              ),
-              column(5,
-                     sliderInput(paste0("repetitions_", seance, "_", j), "Répetitions", min = 1, max = 20, value = c(exercices[[seance]][[j]]$repetitions_min, exercices[[seance]][[j]]$repetitions_max))
-              )
-            )
-          })
-        }
-      })
-    })
   })
   
   # Observer to aggregate data
@@ -365,44 +531,6 @@ server <- function(input, output, session) {
       # Reset the aggregated data if input$seances_par_semaine is NULL or <= 0
       exercices$series_summary_par_semaine <- NULL
     }
-  })
-  
-  # Generate the pie chart of sets per muscle
-  output$set_pie_chart <- renderPlotly({
-    if (!is.null(exercices$series_summary_par_semaine) && nrow(exercices$series_summary_par_semaine) > 0) {
-      plot_ly(exercices$series_summary_par_semaine, labels = ~Muscle, values = ~Series, type = 'pie')
-    } else {
-      plot_ly() %>%
-        layout(title = "Aucune donnée disponible")
-    }
-  })
-  
-  # Récupérer le contenu des séances
-  get_seances <- reactive({
-    seances <- list()
-    for (i in seq_len(input$seances_par_semaine)) {
-      seance <- list()
-      j <- 1
-      repeat {
-        mouvement_input <- paste0("mouvement_", i, "_", j)
-        muscle_input <- paste0("muscle_", i, "_", j)
-        series_input <- paste0("series_", i, "_", j)
-        repetitions_input <- paste0("repetitions_", i, "_", j)
-        if (!is.null(input[[mouvement_input]])) {
-          seance[[j]] <- list(
-            mouvement = input[[mouvement_input]],
-            muscle = input[[muscle_input]],
-            series = input[[series_input]],
-            repetitions = c(input[[repetitions_input]][1], input[[repetitions_input]][2])
-          )
-          j <- j + 1
-        } else {
-          break
-        }
-      }
-      seances[[i]] <- seance
-    }
-    return(seances)
   })
   
   # Download PDF
@@ -450,7 +578,6 @@ server <- function(input, output, session) {
       }
     }
   )
-  
 }
 
 # Run the Shiny app

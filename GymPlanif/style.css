@@ -1,0 +1,101 @@
+
+
+/* New exercice button */
+#ajouter_ligne {
+  position: fixed;
+  display: block;
+  width: 200px;
+  margin: 0 auto;
+  text-decoration: none;
+  text-align: center;
+  position: relative;
+  transition: all 0.35s;
+}
+
+  #ajouter_ligne span {
+    position: relative;
+    width: 100%;
+    z-index: 2;
+  }
+
+  #ajouter_ligne:after {
+    position: absolute;
+    content: "";
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: #09ff008e;
+    transition: all 0.35s;
+  }
+
+  #ajouter_ligne:hover:after {
+    width: 100%;
+  }
+
+  /* Remove exercice button */
+  #supprimer_ligne {
+    position: fixed;
+    display: block;
+    width: 200px;
+    margin: 0 auto;
+    text-decoration: none;
+    text-align: center;
+    position: relative;
+    transition: all 0.35s;
+  }
+  
+    #supprimer_ligne span {
+      position: relative;
+      width: 100%;
+      z-index: 2;
+    }
+  
+    #supprimer_ligne:after {
+      position: absolute;
+      content: "";
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 100%;
+      background: #ff00198e;
+      transition: all 0.35s;
+    }
+  
+    #supprimer_ligne:hover:after {
+      width: 100%;
+    }
+  
+/* Download button */
+#downloadPdf {
+  position: fixed;
+  display: block;
+  width: 200px;
+  margin: 0 auto;
+  text-decoration: none;
+  text-align: center;
+  position: relative;
+  transition: all 0.35s;
+}
+
+  #downloadPdf span {
+    position: relative;
+    width: 100%;
+    z-index: 2;
+  }
+
+  #downloadPdf:after {
+    position: absolute;
+    content: "";
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: #ff00198e;
+    transition: all 0.35s;
+    z-index: 1;
+  }
+
+  #downloadPdf:hover:after {
+    width: 100%;
+  }
