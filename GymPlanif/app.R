@@ -16,16 +16,20 @@ library(kableExtra)
 library(slickR)
 library(bs4Dash)
 library(waiter)
+library(fresh)
 
 # Define predefined lists
 muscles <- c("Pectoraux", "Abdominaux", "Trapèzes", "Dorsaux", "Epaules", "Quadriceps", "Ischio-jambiers", "Fessiers", "Adducteurs", "Mollets", "Biceps", "Triceps")
+
+my_contrast <- create_theme(bs4dash_yiq(contrasted_threshold = 10, text_dark = "#FFF", text_light = "#272c30"))
 
 ############################
 ############ UI ############
 ############################
 
-ui <- dashboardPage(
-  preloader = list(html = tagList(spin_1(), "Loading ..."), color = "black"),
+ui <- dashboardPage(footer = NULL, help = NULL, dark = TRUE,
+  preloader = list(html = tagList(spin_3(), "Chargement ..."), color = "black"),
+  skin = my_contrast,
   header = dashboardHeader(
     rightUi = tagList(
       userOutput("user")
@@ -35,8 +39,9 @@ ui <- dashboardPage(
   sidebar = dashboardSidebar(
     collapsed = TRUE,
     sidebarUserPanel(
-      image = "brand.png",
-      name = "Gym Planif' !"),
+      image = "brand - Copie.png",
+      name = "Gym Planif' !"
+    ),
     
     sidebarMenu(
       menuItem(
@@ -63,18 +68,18 @@ ui <- dashboardPage(
     tabItems(
       # Tab 1: Organisation
       tabItem(tabName = "org",
-        box(
-          width = 12,
-          status = "primary",
-          title = "Semaine type d'entraînement",
-          p("Cliquez sur l'engrenage pour selectionner vos activités"),
-          sidebar = boxSidebar(width = 25,
-            id = "mySidebar",
-            uiOutput("exercise_selection")
-          ),
-          plotlyOutput("plan_summary")
-          )
-        ),
+              box(
+                width = 12,
+                status = "primary",
+                title = "Semaine type d'entraînement",
+                p("Cliquez sur l'engrenage pour selectionner vos activités"),
+                sidebar = boxSidebar(width = 25,
+                                     id = "mySidebar",
+                                     uiOutput("exercise_selection")
+                ),
+                plotlyOutput("plan_summary")
+              )
+      ),
       
       # Tab 2: Entraînement
       tabItem(tabName = "train",
@@ -85,7 +90,8 @@ ui <- dashboardPage(
                 ),
                 column(
                   width = 4,
-                  box( width = 12,
+                  box(
+                    width = 12,
                     title = "Organisation des séances",
                     status = "primary",
                     sliderInput("seances_par_semaine", "Nombre de séances par semaine : ", min = 1, max = 7, value = 4),
@@ -97,26 +103,32 @@ ui <- dashboardPage(
                 )
               )
       ),
+      
       # Tab 3: Récapitulatif
       tabItem(tabName = "recap",
               fluidRow(
-                downloadButton("downloadPdf", "Sauvegardez !"),
-                box(width = 12,
+                column(
+                  width = 12,
+                  downloadButton("downloadPdf", label = span("Sauvegarder !")),
+                  box(
+                    width = 12,
                     title = "Vue globale de vos séances",
                     status = "primary",
                     uiOutput("recap_table")
+                  )
                 )
               )
       )
-    ),
-    controlbar = dashboardControlbar(
-      collapsed = FALSE,
-      div(class = "p-3", skinSelector()), 
-      pinned = FALSE
     )
+  ),
+  
+  controlbar = dashboardControlbar(
+    collapsed = FALSE,
+    div(class = "p-3", skinSelector()), 
+    pinned = FALSE
   )
 )
-  
+
 ###########################
 ######### SERVER ##########
 ###########################
@@ -190,7 +202,8 @@ server <- function(input, output, session) {
             axis.title.x = element_blank(),
             axis.title.y = element_blank(),
             axis.text.y = element_blank(),
-            axis.ticks.y = element_blank()) +
+            axis.ticks.y = element_blank(),
+            axis.text.x = element_text(color = "#007bff")) +  # Couleur du texte sur l'axe des abscisses
       scale_x_discrete(labels = jours)
     
     # Convertir le ggplot en plotly
@@ -297,7 +310,7 @@ server <- function(input, output, session) {
   })
   
   # Liste de couleurs pour les accordions
-  couleurs_accordions <- c("primary", "success", "info", "warning", "danger")
+  couleurs_accordions <- c("primary", "success", "info", "warning", "danger", "purple", "orange")
   
   # Generate UI for each session's exercises
   output$sous_onglets <- renderUI({
@@ -539,17 +552,16 @@ server <- function(input, output, session) {
       paste("Programme_", input$client_name, "_", format(Sys.Date(), "%Y%m%d"), ".pdf", sep = "")
     },
     content = function(file) {
-      
-      # Create a temporary R Markdown file
+      # Création d'un fichier temporaire R Markdown
       tempReport <- file.path(tempdir(), "rapport_seances.Rmd")
       file.copy("rapport_seances.Rmd", tempReport, overwrite = TRUE)
       
-      # Convert reactiveValues to lists
+      # Conversion des reactiveValues en listes
       exercices_list <- reactiveValuesToList(exercices)
       exercise_choices_list <- reactiveValuesToList(exercise_choices)
       exercises_data <- get_seances()
       
-      # Prepare the parameters for rendering the report
+      # Préparation des paramètres pour la génération du rapport
       params_render <- list(
         exercices = exercices_list,
         exercise_choices = exercise_choices_list,
@@ -557,19 +569,16 @@ server <- function(input, output, session) {
         seances = exercises_data
       )
       
-      # Render the report using the specified parameters
+      # Génération du rapport
       tryCatch({
         rmarkdown::render(input = tempReport, output_file = file, params = params_render)
       }, error = function(e) {
-        # Show an error message and return
         showNotification(paste("Erreur lors de la génération du PDF :", e), type = "error")
         return()
       })
       
-      # Show a notification after successful PDF generation
       showNotification("Le téléchargement a bien été effectué !", type = "message")
       
-      # Show a warning if a session does not contain exercises
       for (seance_number in seq_len(input$seances_par_semaine)) {
         seance_key <- as.character(seance_number)
         if (length(exercices_list[[seance_key]]) == 0 || is.null(exercices_list[[seance_key]])) {

@@ -1,5 +1,18 @@
 
 
+/* Styles par défaut pour le carrousel d'images */
+#image_carousel .slick-slide {
+  background-color: transparent !important;
+  position: relative;
+  color: #000000;  /* Couleur du texte par défaut */
+  font-weight: bold;
+}
+
+/* Styles pour le mode sombre */
+.dark-mode #image_carousel .slick-slide {
+  color: #ffffff;  /* Texte blanc en mode sombre */
+}
+
 /* New exercice button */
 #ajouter_ligne {
   position: fixed;
