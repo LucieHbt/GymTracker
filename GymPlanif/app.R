@@ -21,14 +21,17 @@ library(fresh)
 # Define predefined lists
 muscles <- c("Pectoraux", "Abdominaux", "Trapèzes", "Dorsaux", "Epaules", "Quadriceps", "Ischio-jambiers", "Fessiers", "Adducteurs", "Mollets", "Biceps", "Triceps")
 
-my_contrast <- create_theme(bs4dash_yiq(contrasted_threshold = 10, text_dark = "#FFF", text_light = "#272c30"))
+my_contrast <- create_theme(  
+  bs4dash_yiq(
+    contrasted_threshold = 10, text_dark = "#FFF", text_light = "#272c30"))
 
 ############################
 ############ UI ############
 ############################
 
-ui <- dashboardPage(footer = NULL, help = NULL, dark = TRUE,
-  preloader = list(html = tagList(spin_3(), "Chargement ..."), color = "black"),
+ui <- dashboardPage(
+  footer = NULL, help = NULL, dark = TRUE,
+  preloader = list(html = tagList(spin_3(), "Chargement ..."), color = "#272c30"),
   skin = my_contrast,
   header = dashboardHeader(
     rightUi = tagList(
@@ -62,10 +65,12 @@ ui <- dashboardPage(footer = NULL, help = NULL, dark = TRUE,
     )
   ),
   
-  body = dashboardBody(
+  body = bs4DashBody(
+    use_theme(my_contrast),
     chooseSliderSkin("Round"),
     includeCSS("style.css"),
-    tabItems(
+    bs4TabItems(
+      
       # Tab 1: Organisation
       tabItem(tabName = "org",
               box(
@@ -140,17 +145,19 @@ server <- function(input, output, session) {
       name = "Lucie HUBERT",
       image = "https://media.licdn.com/dms/image/D4E03AQErycNPVoJRhw/profile-displayphoto-shrink_800_800/0/1666273099421?e=1726099200&v=beta&t=EierabsopiNJWADMmh9YLrOzBQyShQ_6GGZucBfJ4RU",
       title = "Etudiante",
-      fluidRow(
-        column(
-          width = 12,
-          align = "center",
-          tags$a(href = "www.linkedin.com/in/lucie-hubert-74490b233", 
+      fluidRow(       
+        column(        
+          width = 12,        
+          tags$a(href = "https://www.linkedin.com/in/lucie-hubert-74490b233/", 
                  HTML('<i class="fab fa-linkedin fa-2x"></i>'), 
+                 style = "color: #0077B5; text-decoration: none; margin-left: 10px;"),
+          tags$a(href = "https://github.com/LucieHbt", 
+                 HTML('<i class="fab fa-github fa-2x"></i>'), 
                  style = "color: #0077B5; text-decoration: none; margin-left: 10px;")
-          ),
-          )
+        )
       )
-    })
+    )
+  })
   
   ##########################
   ######## ADHESION ########
@@ -184,7 +191,7 @@ server <- function(input, output, session) {
     jours <- c("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi", "Dimanche")
     lapply(jours, function(day) {
       selectInput(paste0("exercise_", day), paste("Séance du", day, ":"),
-                  choices = c("PUSH", "PULL", "LEGS", "UPPER", "LOWER", "RUN", "REST"),
+                  choices = c("PUSH", "PULL", "LEGS", "UPPER", "LOWER", "FULLBODY", "RUN", "REST"),
                   selected = exercise_choices[[day]])
     })
   })
@@ -196,7 +203,7 @@ server <- function(input, output, session) {
                        Exercices_day = exercises_per_day)
     
     p <- ggplot(data, aes(x = Jour, fill = Exercices_day)) +
-      geom_bar(stat = "count") +  # Utilisation de stat = "count" pour compter les occurrences
+      geom_bar() +
       theme_minimal() +
       theme(legend.position = "none",
             axis.title.x = element_blank(),

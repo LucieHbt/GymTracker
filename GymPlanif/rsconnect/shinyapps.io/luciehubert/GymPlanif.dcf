@@ -1,0 +1,12 @@
+name: GymPlanif
+title: GymPlanif
+username: luciehubert
+account: luciehubert
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 12309943
+bundleId: 8856192
+url: https://luciehubert.shinyapps.io/GymPlanif/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

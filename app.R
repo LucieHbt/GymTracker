@@ -7,6 +7,7 @@ library(shiny)
 library(shinyBS)
 library(shinyWidgets)
 library(plotly)
+library(dplyr)
 library(gridExtra)
 library(kableExtra)
 library(colourpicker)
@@ -26,7 +27,10 @@ data <- read.csv(
 mouvements <- c("Muscle up", "Squat", "Pull Up", "Dips", "Bench", "Deadlift", "Renfo")
 muscles <- c("Pectoraux", "Abdominaux", "Trapèzes", "Dorsaux", "Epaules", "Quadriceps", "Ischio-jambiers", "Fessiers", "Adducteurs", "Mollets", "Biceps", "Triceps")
 activity_levels <- c("Sédentaire", "Activité légère", "Activité modérée", "Activité intense", "Activité très intense")
-my_contrast <- create_theme(bs4dash_yiq(contrasted_threshold = 10, text_dark = "#FFF", text_light = "#272c30"))
+
+my_contrast <- create_theme(  
+  bs4dash_yiq(
+    contrasted_threshold = 10, text_dark = "#FFF", text_light = "#272c30"))
 
 ##########################
 ########### UI ###########
@@ -46,16 +50,14 @@ ui <- dashboardPage(
     collapsed = TRUE,
     sidebarUserPanel(
       image = "brand - Copie.png",
-      name = "Gym Planif' !"
+      name = "Gym Tracker !"
     ),
     
     sidebarMenu(
       menuItem(text = HTML("\ud83c\udfaf Présentation"), tabName = "presentation", icon = icon("circle")),
       
       menuItem(
-        text = HTML("\ud83c\udfcb\ufe0f\u200d\u2640 Pyramide de l'entraînement"),
-        tabName = "pyramide_train",
-        icon = icon("circle"),
+        text = HTML("\ud83c\udfcb\ufe0f\u200d\u2640 Pyramide de l'entraînement"), tabName = "pyramide_train", icon = icon("circle"),
         menuSubItem(text = "Adhésion", tabName = "adhesion"),
         menuSubItem(text = "Volume/Intensité/Fréquence", tabName = "vif"),
         menuSubItem(text = "Progression", tabName = "progression"),
@@ -64,10 +66,7 @@ ui <- dashboardPage(
       
       menuItem(text = HTML("\ud83c\udfc6 Entraînement"), tabName = "train", icon = icon("circle")),
       
-      menuItem(
-        text = HTML("\ud83c\udf4e Pyramide de la nutrition"),
-        tabName = "pyramide_nutrition",
-        icon = icon("circle"),
+      menuItem(text = HTML("\ud83c\udf4e Pyramide de la nutrition"), tabName = "pyramide_nutrition", icon = icon("circle"),
         menuSubItem(text = "Balance énergétique", tabName = "bal_nrj"),
         menuSubItem(text = "Macronutriments", tabName = "macronutriments"),
         menuSubItem(text = "Micronutriments", tabName = "micronutriments"),
@@ -78,29 +77,29 @@ ui <- dashboardPage(
     )
   ),
   
-  body = dashboardBody(
+  body = bs4DashBody(
+    use_theme(my_contrast),
     chooseSliderSkin("Round"),
     includeCSS("style.css"),
-    tabItems(
+    bs4TabItems(
       
       # Tab 1: Présentation
-      tabItem(tabName = "presentation",
+      bs4TabItem(tabName = "presentation",
               bs4Card(
-                title = "Bienvenue dans Gym Planif' !",
+                title = "Bienvenue dans Gym Tracker !",
                 status = "primary",
                 solidHeader = TRUE,
                 width = 12,
                 collapsible = FALSE,
                 closable = FALSE,
                 p("Cette application s'inspire des travaux de M. Helms sur la science du sport et de la nutrition, qui mettent en avant les priorités à prendre en compte pour contrôler son entraînement et son alimentation."),
-                slickROutput("image_carousel")  # Utilisation de slickROutput pour le carousel d'images
+                slickROutput("image_carousel")
               )
       ),
-      
       # Tab 2: Pyramide de l'entraînement
-      tabItem(tabName = "adhesion",
+      bs4TabItem(tabName = "adhesion",
               bs4Card(
-                title = "Adhésion",
+                title = "L'adhésion ?",
                 status = "primary",
                 solidHeader = TRUE,
                 width = 12,
@@ -114,7 +113,7 @@ ui <- dashboardPage(
                         p("Comprendre les principes de l'entraînement permet de maintenir un programme sur le long terme en prenant en compte vos contraintes personnelles, professionnelles et vos objectifs évolutifs.")
               )
               ),
-              box(
+              bs4Card(
                 width = 12,
                 status = "primary",
                 title = "Semaine type d'entraînement",
@@ -125,68 +124,103 @@ ui <- dashboardPage(
       ),
       
       # Tab 3: Volume/Intensité/Fréquence
-      tabItem(tabName = "vif",
-              fluidRow(
-                mainPanel(width = 4,
-                          h4("Les principes fondamentaux"),
-                          p("Le nombre d’exercices et votre temps n’étant pas illimités, voici les principales variables d'entraînement sur lesquelles vous pouvez jouer :"),
-                          actionButton(inputId = "vol", label = "Volume"),
-                          actionButton(inputId = "int", label = "Intensité"),
-                          actionButton(inputId = "freq", label = "Fréquence"),
-                          actionButton(inputId = "exe_btn", label = "Exécution"),
-                          bsTooltip(id = "vol", title = "Réfléchissez au nombre de répétitions/séries que vous souhaitez sur les groupes musculaires visés.", trigger = "hover"),
-                          bsTooltip(id = "int", title = "Mettez de la charge (tension mécanique) de manière progressive sur vos exercices.", trigger = "hover"),
-                          bsTooltip(id = "freq", title = "Choisissez les exercices par séances que vous aimez et que vous êtes capable de réaliser sans douleur.", trigger = "hover"),
-                          bsTooltip(id = "exe_btn", title = "Soignez la technique d'exécution de vos exercices (phase concentrique/excentrique, vitesse, amplitude...).", trigger = "hover"),
-                          h4("Combien de séries par groupe musculaire ?"),
-                          actionButton(inputId = "dev", label = "Pour développer"),
-                          actionButton(inputId = "maintien", label = "Pour maintenir"),
-                          bsTooltip(id = "dev", title = "Pour développer la qualité voulue, il est conseillé de réaliser entre 10 et 20 séries par groupe musculaire par semaine.", trigger = "hover"),
-                          bsTooltip(id = "maintien", title = "Pour maintenir la qualité voulue, il est conseillé de réaliser entre 3 et 5 séries par groupe musculaire par semaine.", trigger = "hover"),
-                          h4("Combien de temps de repos entre les séries ?"),
-                          actionButton(inputId = "poly", label = "Polyarticulaires"),
-                          actionButton(inputId = "mono", label = "Monoarticulaires"),
-                          bsTooltip(id = "poly", title = "Il est conseillé de prendre entre 3 et 5 minutes de repos entre chaque série de travail.", trigger = "hover"),
-                          bsTooltip(id = "mono", title = "Il est conseillé de prendre entre 2 et 3 minutes de repos entre chaque série de travail.", trigger = "hover")
-                ),
-                sidebarPanel(width = 7,
-                             tags$figure(
-                               img(src = "rep.jpeg", height = "auto", width = "100%"),
-                               tags$figcaption("Crédit image : Ghaïs \"Geek'n'Fit\" Guelaïa, Combien de reps pour quels objectifs ?, panodyssey.com.")
-                             )
-                )
+      bs4TabItem(
+        tabName = "vif",
+        fluidRow(
+          column(
+            width = 6,
+            bs4Card(
+              title = "Les principes fondamentaux",
+              status = "primary",
+              solidHeader = TRUE,
+              width = 12,
+              p("Le nombre d’exercices et votre temps n’étant pas illimités, voici les principales variables d'entraînement sur lesquelles vous pouvez jouer :"),
+              actionButton(inputId = "vol_btn", label = "Volume", title = "Réfléchissez au nombre de répétitions/séries que vous souhaitez sur les groupes musculaires visés."),
+              actionButton(inputId = "int_btn", label = "Intensité", title = "Mettez de la charge (tension mécanique) de manière progressive sur vos exercices."),
+              actionButton(inputId = "freq_btn", label = "Fréquence", title = "Choisissez les exercices par séances que vous aimez et que vous êtes capable de réaliser sans douleur."),
+              actionButton(inputId = "exe_btn", label = "Exécution", title = "Soignez la technique d'exécution de vos exercices (concentrique/excentrique, vitesse, amplitude...)."),
+              bsTooltip(id = "vol_btn", title = "Mettez de la charge (tension mécanique) de manière progressive sur vos exercices."),
+              bsTooltip(id = "int_btn", title = "Il est conseillé de prendre entre 2 et 3 minutes de repos entre chaque série de travail."),
+              bsTooltip(id = "freq_btn", title = "Choisissez les exercices par séances que vous aimez et que vous êtes capable de réaliser sans douleur."),
+              bsTooltip(id = "exe_btn", title = "Soignez la technique d'exécution de vos exercices (concentrique/excentrique, vitesse, amplitude...).")
+              ),
+            bs4Card(
+              title = "Combien de séries par groupe musculaire ?",
+              status = "primary",
+              solidHeader = TRUE,
+              width = 12,
+              actionButton(inputId = "dev", label = "Pour développer", title = "Pour développer la qualité voulue, il est conseillé de réaliser entre 10 et 20 séries par groupe musculaire par semaine."),
+              actionButton(inputId = "maintien", label = "Pour maintenir", title = "Pour maintenir la qualité voulue, il est conseillé de réaliser entre 3 et 5 séries par groupe musculaire par semaine."),
+              bsTooltip(id = "dev", title = "Pour développer la qualité voulue, il est conseillé de réaliser entre 10 et 20 séries par groupe musculaire par semaine."),
+              bsTooltip(id = "maintien", title = "Pour maintenir la qualité voulue, il est conseillé de réaliser entre 3 et 5 séries par groupe musculaire par semaine.")
+            ),
+            bs4Card(
+              title = "Combien de temps de repos entre les séries ?",
+              status = "primary",
+              solidHeader = TRUE,
+              width = 12,
+              actionButton(inputId = "poly", label = "Polyarticulaires", title = "Il est conseillé de prendre entre 3 et 5 minutes de repos entre chaque série de travail."),
+              actionButton(inputId = "mono", label = "Monoarticulaires", title = "Il est conseillé de prendre entre 2 et 3 minutes de repos entre chaque série de travail."),
+              bsTooltip(id = "poly", title = "Il est conseillé de prendre entre 3 et 5 minutes de repos entre chaque série de travail."),
+              bsTooltip(id = "mono", title = "Il est conseillé de prendre entre 2 et 3 minutes de repos entre chaque série de travail.")
+            )
+          ),
+          column(
+            width = 6,
+            sidebarPanel(
+              width = 12,
+              tags$figure(
+                img(src = "rep.jpeg", height = "auto", width = "100%"),
+                tags$figcaption("Crédit image : Ghaïs \"Geek'n'Fit\" Guelaïa, Combien de reps pour quels objectifs ?, panodyssey.com.")
               )
+            )
+          )
+        )
       ),
+      
       
       # Tab 4: Progression
       tabItem(tabName = "progression",
               fluidRow(
                 # Première colonne avec la carte sur la progression en musculation
                 column(width = 12,
-                       bs4Card(width = 12,
+                       fluidRow(
+                       bs4Card(width = 6,
                          title = "Comment progresser en musculation ?",
                          status = "primary",
                          solidHeader = TRUE,
+                         collapsible = TRUE,  # Définir la carte comme collapsible
+                         collapsed = TRUE,    # Définir la carte comme fermée par défaut
+                         
                          p("Chaque série de travail est une opportunité de progresser. Toutefois, il est fondamental de faire preuve de progressivité."),
                          p("Utiliser des cycles de progression peut permettre de programmer votre progression de séance en séance. Des cycles de 8 à 12 semaines sont intéressants pour varier votre pratique et mettre l'accent sur un élément de votre physique : force, hypertrophie de certains groupes musculaires, endurance..."),
-                         p("Tenir un cahier d'entraînement peut également faciliter le suivi de vos performances si vous notez vos charges et le RPE (effort perçu) pour chaque série de travail de chaque exercice à chaque séance."),
-                         h4("Les principales variables"),
+                         p("Tenir un cahier d'entraînement peut également faciliter le suivi de vos performances si vous notez vos charges et le RPE (effort perçu) pour chaque série de travail de chaque exercice à chaque séance.")
+                       ),
+                       bs4Card(width = 6,
+                               title = "Les principales variables",
+                               status = "primary",
+                               solidHeader = TRUE,
+                               collapsible = TRUE,
+                               collapsed = TRUE,    
+                               
                          p("Vous ne devez moduler qu'une seule variable à la fois, afin de progresser tout en respectant vos capacités de récupération."),
-                         actionButton(inputId = "volume", label = "Volume"),
-                         actionButton(inputId = "intensite", label = "Intensité"),
-                         actionButton(inputId = "frequence", label = "Fréquence"),
-                         actionButton(inputId = "duree", label = "Tempo"),
-                         bsTooltip(id = "volume", title = "Visez plus de répétitions/séries sur vos groupes musculaires cibles à chaque entraînement.", trigger = "hover"),
-                         bsTooltip(id = "intensite", title = "Augmentez les charges (tension mécanique) que vous soulevez à chaque entraînement.", trigger = "hover"),
-                         bsTooltip(id = "frequence", title = "Ajoutez des exercices/séances supplémentaires par semaine.", trigger = "hover"),
-                         bsTooltip(id = "duree", title = "Prolongez votre temps sous tension lors de vos exercices (tempo, ralentir la phase excentrique...).", trigger = "hover")
-                       )
+                         actionButton(inputId = "volume", label = "Volume", title = "Visez plus de répétitions/séries sur vos groupes musculaires cibles à chaque entraînement."),
+                         actionButton(inputId = "intensite", label = "Intensité", title = "Augmentez les charges (tension mécanique) que vous soulevez à chaque entraînement."),
+                         actionButton(inputId = "frequence", label = "Fréquence", title = "Ajoutez des exercices/séances supplémentaires par semaine."),
+                         actionButton(inputId = "duree", label = "Tempo", title = "Prolongez votre temps sous tension lors de vos exercices (tempo, ralentir la phase excentrique...)."),
+                         bsTooltip(id = "volume", title = "Visez plus de répétitions/séries sur vos groupes musculaires cibles à chaque entraînement."),
+                         bsTooltip(id = "intensite", title = "Augmentez les charges (tension mécanique) que vous soulevez à chaque entraînement."),
+                         bsTooltip(id = "frequence", title = "Ajoutez des exercices/séances supplémentaires par semaine."),
+                         bsTooltip(id = "duree", title = "Prolongez votre temps sous tension lors de vos exercices (tempo, ralentir la phase excentrique...).")
+                )
+                )
                 ),
                 # Deuxième colonne avec les deux calculateurs théoriques
                 column(width = 12,
                        fluidRow(
                          bs4Card(
                            width = 6,
+                           status = "primary",
                            title = "Calculateur théorique du tonnage",
                            numericInput("set", "Nombre de séries :", min = 0, value = 0),
                            numericInput("rep", "Nombre de répétitions :", min = 0, max = 20, value = c(6,8)),
@@ -195,6 +229,7 @@ ui <- dashboardPage(
                            tags$p("Note : Le tonnage total est le produit du nombre de séries, de répétitions et de la charge utilisée.", style = "font-size: 90%;")
                          ),
                          bs4Card(
+                           status = "primary",
                            width = 6,
                            title = "Calculateur théorique de 1RM",
                            numericInput("charge", "Charge soulevée (kg)", value = 100, label = "Entrez la charge :"),
@@ -211,30 +246,53 @@ ui <- dashboardPage(
       
       # Tab 5: Sélection d'exercices
       tabItem(tabName = "selec_ex",
-              mainPanel(width = 12,
-                        h4("Comment choisir les bons exercices ?"),
+              fluidRow(
+                # Première colonne avec la carte sur la progression en musculation
+                column(width = 12,
+                       fluidRow(
+                         bs4Card(width = 6,
+                                 title = "Comment choisir les bons exercices ?",
+                                 status = "primary",
+                                 solidHeader = TRUE,
+                                 collapsible = TRUE, 
+                                 collapsed = TRUE,    
+                                 
                         p("Chaque morphologie est unique. C'est pourquoi le choix des exercices doit être individuel. Il ne s'agit pas de reprendre le programme tout fait d'un ami ou celui de votre influenceur préféré, car certains de ces exercices vous iront, mais d'autres beaucoup moins."),
                         p("Il existe de grandes différences entre chaque personne pour les mêmes exercices. Si un exercice ne vous convient pas parce que son exécution vous fait mal, il est inutile d'insister : mettez cet exercice de côté."),
-                        p("Choisissez vos exercices selon votre morphologie et selon vos objectifs. Dirigez-vous vers des exercices agréables à exécuter et utiles."),
-                        h4("Deux grands groupes d'exercices"),
-                        tags$ul(
+                        p("Choisissez vos exercices selon votre morphologie et selon vos objectifs. Dirigez-vous vers des exercices agréables à exécuter et utiles.")
+                         ),
+                        bs4Card(width = 6,
+                                title = "Deux grands groupes d'exercices",
+                                status = "primary",
+                                solidHeader = TRUE,
+                                collapsible = TRUE, 
+                                collapsed = TRUE,   
+                                
+                                tags$ul(
                           tags$li("Les exercices polyarticulaires : permettent de soulever lourd avec une forte sollicitation des muscles (forte tension mécanique) en peu de temps (faible stress métabolique), mais ils sont fatigants et ne permettent pas forcément de mettre un muscle au centre des priorités."),
-                          tags$li("Les exercices monoarticulaires ou d'isolation : sollicitent moins de muscles (faible tension mécanique), mais demandent moins d'énergie, il est donc possible de cibler des muscles en particulier plus longtemps (fort stress métabolique)."
-                          )
-                        ),
+                          tags$li("Les exercices monoarticulaires ou d'isolation : sollicitent moins de muscles (faible tension mécanique), mais demandent moins d'énergie, il est donc possible de cibler des muscles en particulier plus longtemps (fort stress métabolique).")),
                         p("Les exercices polyarticulaires doivent composer l'essentiel d'un programme (1 à 2 exercices par séance), puis les exercices d'isolation peuvent se greffer à votre programme afin d'aider au développement de muscles en retard ou auxquels vous voulez donner la priorité.")
-              ),
-              sidebarPanel(width = 12,
-                           h4("Exercices de renforcement pour les exercices polyarticulaires courants"),
+                        )
+                        )
+                       ),
+                column(width = 12,
+                       fluidRow(
+                         bs4Card(
+                           title = "Exercices de renforcement pour les exercices polyarticulaires courants",
+                           status = "primary",
                            selectInput("mouvement", "Choisir un mouvement :", choices = c("Muscle up", "Squat", "Pull Up", "Dips", "Bench", "Deadlift")),
                            tableOutput("exercice"),
                            tableOutput("muscles_cibles")
-              ),
-              sidebarPanel(width = 12,
-                           h4("Exercices ciblés pour votre objectif"),
+                           ),
+                         bs4Card(
+                           title = "Exercices ciblés pour votre objectif",
+                           status = "primary",
                            selectInput("muscle", "Choisir un muscle :", choices = muscles),
                            tableOutput("exercices_muscle"))
-          ),
+                         )
+                       )
+                )
+              ),
     
     # Tab 3: Entraînement
     tabItem(tabName = "train",
@@ -253,63 +311,77 @@ ui <- dashboardPage(
                   uiOutput("seance_select"),
                   actionButton("ajouter_ligne", "Ajouter un exercice", icon = icon("plus")),
                   actionButton("supprimer_ligne", "Supprimer un exercice", icon = icon("minus")),
-                  plotlyOutput("set_pie_chart"))))
+                  plotlyOutput("set_pie_chart"),
+                  textInput("client_name", label = "Nom du pratiquant : ", value = ""),
+                  downloadButton("downloadPdf", label = span("Sauvegarder !"))
+                )))
             ),
     
     # Tab 4: Pyramide de la nutrition
     # 4.1 Balance énergétique
     tabItem(tabName = "bal_nrj",
-            mainPanel(width = 12,
-                      h4("De quoi parle-t-on ?"),
-                                      p("La balance énergétique fait référence à l’équilibre entre les calories que vous consommez (par l’alimentation) et les calories que vous brûlez (par l’exercice physique et le métabolisme de base) au cours d’une journée."),
-                                      tags$ul(
-                                        tags$li("Si vous consommez plus de calories que vous n’en brûlez, vous prendrez du poids."),
-                                        tags$li("Si vous brûlez plus de calories que vous n’en consommez, vous perdrez du poids.")
+            fluidRow(
+              # Première colonne avec la carte sur la progression en musculation
+              column(width = 12,
+                     fluidRow(
+                       bs4Card(width = 12,
+                               title = "De quoi parle-t-on ?",
+                               status = "primary",
+                               solidHeader = TRUE,
+                               p("La balance énergétique fait référence à l’équilibre entre les calories que vous consommez (par l’alimentation) et les calories que vous brûlez (par l’exercice physique et le métabolisme de base) au cours d’une journée."),
+                               tags$ul(
+                                 tags$li("Si vous consommez plus de calories que vous n’en brûlez, vous prendrez du poids."),
+                                 tags$li("Si vous brûlez plus de calories que vous n’en consommez, vous perdrez du poids.")
+                                 ),
+                               p("Il existe deux leviers pour agir sur la balance énergétique :"),
+                               tags$ul(
+                                 tags$li("Agir sur votre activité physique : marche, sport..."),
+                                 tags$li("Agir sur votre apport calorique : surplus/maintien/déficit calorique.")
+                                 ),
+                               column(width = 12,
+                                      fluidRow(
+                               bs4Card(width = 6,
+                                       title = "Mon niveau d'activité ?",
+                                       status = "primary",
+                                       solidHeader = TRUE,
+                                       collapsible = TRUE,  
+                                       collapsed = TRUE,    
+                                       
+                                       actionButton(inputId = "sed", label = "Sédentaire",title = "Aucun exercice quotidien ou presque."),
+                                       actionButton(inputId = "l_actif", label = "Légèrement actif", title = "Vous faites parfois des exercices physiques (1 à 3 fois par semaine)."),
+                                       actionButton(inputId = "actif", label = "Actif", title = "Vous faites régulièrement des exercices physiques (3 à 5 fois par semaine)."),
+                                       actionButton(inputId = "t_actif", label = "Très actif", title = "Vous faites quotidiennement du sport ou des exercices physiques soutenus."),
+                                       actionButton(inputId = "ext_actif", label = "Extrêmement actif", title = "Votre travail est extrêmement physique ou bien vous vous considérez comme un athlète."),
+                                      bsTooltip(id = "sed", title = "Aucun exercice quotidien ou presque."),
+                                      bsTooltip(id = "l_actif", title = "Vous faites parfois des exercices physiques (1 à 3 fois par semaine)."),
+                                      bsTooltip(id = "actif", title = "Vous faites régulièrement des exercices physiques (3 à 5 fois par semaine)."),
+                                      bsTooltip(id = "t_actif", title = "Vous faites quotidiennement du sport ou des exercices physiques soutenus."),
+                                      bsTooltip(id = "ext_actif", title = "Votre travail est extrêmement physique ou bien vous vous considérez comme un athlète."),
+                                      p("Par exemple, si vous êtes étudiant et que vous faites du sport 4 fois par semaine, alors vous êtes considéré comme étant « actif ».")
                                       ),
-                                      p("Il existe deux leviers pour agir sur la balance énergétique :"),
-                                      tags$ul(
-                                        tags$li("Agir sur votre activité physique : marche, sport..."),
-                                        tags$li("Agir sur votre apport calorique : surplus/maintien/déficit calorique.")
-                                      ),
-                                      h4("Mon niveau d'activité ?"),
-                                      actionButton(inputId = "sed", label = "Sédentaire"),
-                                      actionButton(inputId = "l_actif", label = "Légèrement actif"),
-                                      actionButton(inputId = "actif", label = "Actif"),
-                                      actionButton(inputId = "t_actif", label = "Très actif"),
-                                      actionButton(inputId = "ext_actif", label = "Extrêmement actif"),
-                                      bsTooltip(id = "sed",
-                                                title = "Aucun exercice quotidien ou presque.",
-                                                trigger = "hover"),
-                                      bsTooltip(id = "l_actif",
-                                                title = "Vous faites parfois des exercices physiques (1 à 3 fois par semaine).",
-                                                trigger = "hover"),
-                                      bsTooltip(id = "actif",
-                                                title = "Vous faites régulièrement des exercices physiques (3 à 5 fois par semaine).",
-                                                trigger = "hover"),
-                                      bsTooltip(id = "t_actif",
-                                                title = "Vous faites quotidiennement du sport ou des exercices physiques soutenus.",
-                                                trigger = "hover"),
-                                      bsTooltip(id = "ext_actif",
-                                                title = "Votre travail est extrêmement physique ou bien vous vous considérez comme un athlète.",
-                                                trigger = "hover"),
-                                      p("Par exemple, si vous êtes étudiant et que vous faites du sport 4 fois par semaine, alors vous êtes considéré comme étant « actif »."),
-                                      h4("Et pour atteindre mon objectif ?"),
-                                      actionButton(inputId = "maintenir", label = "Maintenir mon poids"),
-                                      actionButton(inputId = "prendre", label = "Prendre du poids"),
-                                      actionButton(inputId = "perdre", label = "Perdre du poids"),
-                                      bsTooltip(id = "maintenir",
-                                                title = "Consommez ce que vous dépensez.",
-                                                trigger = "hover"),
-                                      bsTooltip(id = "prendre",
-                                                title = "\u2197 de 15% votre apport calorique pendant 2 semaines, puis \u2197 progressivement de 10% toutes les 2 semaines.",
-                                                trigger = "hover"),
-                                      bsTooltip(id = "perdre",
-                                                title = "\u2198 de 15% votre apport calorique (glucides) pendant 2 semaines, puis \u2198 progressivement de 10% toutes les 2 semaines.",
-                                                trigger = "hover"),
-                                      h4("Comment calculer mes besoins énergétiques ?"),
-                                      p("\ud83d\udce2 ATTENTION ce ne sont que des estimations théoriques, vous devez ajuster le chiffre obtenu selon vos résultats.")
-                            ),
-                            sidebarPanel(width = 3,
+                               bs4Card(width = 6,
+                                       title = "Et pour atteindre mon objectif ?",
+                                       status = "primary",
+                                       solidHeader = TRUE,
+                                       collapsible = TRUE,  
+                                       collapsed = TRUE,   
+                                       
+                                      actionButton(inputId = "maintenir", label = "Maintenir mon poids", title = "Consommez ce que vous dépensez."),
+                                      actionButton(inputId = "prendre", label = "Prendre du poids", title = "\u2197 de 15% votre apport calorique pendant 2 semaines, puis \u2197 progressivement de 10% toutes les 2 semaines."),
+                                      actionButton(inputId = "perdre", label = "Perdre du poids", title = "\u2198 de 15% votre apport calorique (glucides) pendant 2 semaines, puis \u2198 progressivement de 10% toutes les 2 semaines."),
+                                      bsTooltip(id = "maintenir", title = "Consommez ce que vous dépensez."),
+                                      bsTooltip(id = "prendre", title = "\u2197 de 15% votre apport calorique pendant 2 semaines, puis \u2197 progressivement de 10% toutes les 2 semaines."),
+                                      bsTooltip(id = "perdre", title = "\u2198 de 15% votre apport calorique (glucides) pendant 2 semaines, puis \u2198 progressivement de 10% toutes les 2 semaines.")
+                                      ))
+                               )
+                               )
+                               ),
+                     column(width = 12,
+                            fluidRow(width = 4,
+                              bs4Card(width = 4,
+                                       title = "Comment calculer mes besoins énergétiques ?",
+                                       status = "primary",
+                                       p("\ud83d\udce2 ATTENTION ce ne sont que des estimations théoriques, vous devez ajuster le chiffre obtenu selon vos résultats."),
                                          selectInput("sex", "Sexe", choices = c("Homme", "Femme")),
                                          numericInput("age", "Âge (années)", value = 22, min = 0),
                                          numericInput("weight", "Poids (kg)", value = 60, min = 0),
@@ -325,7 +397,7 @@ ui <- dashboardPage(
                                          textOutput("bcj_result")
                             ),
                             mainPanel(
-                              fluidRow(
+                              fluidRow(width = 6,
                                 column(6,
                                        h4("Dépense Énergétique Quotidienne"),
                                        plotlyOutput("energy_plot")
@@ -333,114 +405,146 @@ ui <- dashboardPage(
                                 column(6,
                                        h4(textOutput("macro_title")),
                                        plotlyOutput("macro_plot"))))
+              )
+              )
+              )
+              )
             ),
-                    
-                    # 4.2 Macronutriments
-                    tabItem(tabName = "macronutriments",
-                            mainPanel(width = 12,
-                                      h4("Protéines, Glucides, Lipides ?"),
-                                      p("Nos apports énergétiques nous proviennent uniquement de ce que nous mangeons et buvons."),
-                                      p("Les calories issues de l’alimentation existent principalement sous 3 formes, appelées macronutriments : les protéines, les glucides et les lipides."),
-                                      tags$ul(
-                                        tags$li("\ud83c\udf73 1 g de protéine = 4 Cal."),
-                                        tags$li("\ud83c\udf5a 1 g de glucides = 4 Cal."),
-                                        tags$li("\ud83e\udd51 1 g de lipides = 9 Cal.")
-                                      ),
-                                      p("Pensez au fait qu'aucun aliment ne fait grossir ou maigrir en soi. L’effet d’une calorie sur notre poids est le même : 1.000 kcal de pâte à tartiner « pèsera » autant dans votre bilan énergétique que 1.000 kcal de haricots rouges."),
-                                      p("Toutefois, votre pourcentage de graisse, d'os et de masse musculaire est en perpétuelle évolution, c'est pourquoi l'origine des calories ingérées impacte directement votre composition corporelle."),
-                                      h4("Comment ajuster mes macronutriments en perte de poids ?"),
-                                      p("En perte de poids, les protéines jouent un rôle crucial en préservant votre masse musculaire, tandis que les lipides sont essentiels pour maintenir le bon fonctionnement de vos fonctions hormonales et cognitives. C'est pourquoi il est préférable de réduire votre apport calorique en diminuant vos apports glucidiques."),
-                                      p("Vous pourriez ressentir une baisse d'énergie, mais vos fonctions vitales et reproductives resteront opérationnelles."),
-                                      h4("Où trouver mes macronutriments ?"),
-                                      p("\ud83d\udd0e Pour faciliter un bon suivi de vos calories et de vos nutriments, utilisez des applications comme ",
-                                        a("MyFitnessPal", href = "https://www.myfitnesspal.com/fr"),
-                                        " ou encore ",
-                                        a("Yazio", href = "https://www.yazio.com/fr"),
-                                        ".")
-                            ),
-                            sidebarPanel(
-                              selectInput(inputId = "nutrient", label = "Sélectionner le nutriment :", choices = c("Protéines" = "proteines", "Glucides" = "glucides", "Lipides" = "lipides")),
-                              radioButtons(inputId = "select_level", label = "Sélectionner le niveau :", choices = c("Groupes" = "alim_ssgrp_nom_fr", "Sous-groupes" = "alim_ssssgrp_nom_fr")),
-                              colourpicker::colourInput(inputId = "hist_color", label = "Choisir une couleur", value = "#C43413"),
-                              p("Source : Ciqual 2020")
-                            ),
-                            mainPanel(
-                              uiOutput("histo_title"),
-                              plotlyOutput("histogram", height = 600))
-                            ),
-                    
+    
+    # 4.2 Macronutriments
+    tabItem(tabName = "macronutriments",
+            fluidRow(
+              column(width = 12,
+                     fluidRow(
+                       bs4Card(
+                         width = 6,
+                         status = "primary",
+                         solidHeader = TRUE,
+                         title = "Protéines, Glucides, Lipides ?",
+                         p("Nos apports énergétiques nous proviennent uniquement de ce que nous mangeons et buvons."),
+                         p("Les calories issues de l’alimentation existent principalement sous 3 formes, appelées macronutriments : les protéines, les glucides et les lipides."),
+                         tags$ul(
+                           tags$li("\ud83c\udf73 1 g de protéine = 4 Cal."),
+                           tags$li("\ud83c\udf5a 1 g de glucides = 4 Cal."),
+                           tags$li("\ud83e\udd51 1 g de lipides = 9 Cal.")
+                         ),
+                         p("Votre pourcentage de graisse, d'os et de masse musculaire est en perpétuelle évolution, c'est pourquoi l'origine des calories ingérées impacte directement votre composition corporelle.")
+                       ),
+                       bs4Card(
+                         width = 6,
+                         status = "primary",
+                         solidHeader = TRUE,
+                         collapsible = TRUE,
+                         collapsed = TRUE,   
+                         
+                         title = "Comment ajuster mes macronutriments en perte de poids ?",
+                         p("En perte de poids, les protéines jouent un rôle crucial en préservant votre masse musculaire, tandis que les lipides sont essentiels pour maintenir le bon fonctionnement de vos fonctions hormonales et cognitives. C'est pourquoi il est préférable de réduire votre apport calorique en diminuant vos apports glucidiques."),
+                         p("Vous pourriez ressentir une baisse d'énergie, mais vos fonctions vitales et reproductives resteront opérationnelles."),
+                         p("Pensez au fait qu'aucun aliment ne fait grossir ou maigrir en soi. L’effet d’une calorie sur notre poids est le même : 1.000 kcal de pâte à tartiner « pèsera » autant dans votre bilan énergétique que 1.000 kcal de haricots rouges.")
+                       )
+                     )
+              ),
+              column(width = 12,
+                     fluidRow(
+                       box(
+                         width = 12,
+                         status = "primary",
+                         title = uiOutput("histo_title"),
+                         p("\ud83d\udd0e Pour faciliter un bon suivi de vos calories et de vos nutriments, utilisez des applications comme ",
+                           a("MyFitnessPal", href = "https://www.myfitnesspal.com/fr"),
+                           " ou encore ",
+                           a("Yazio", href = "https://www.yazio.com/fr"),
+                           "."),
+                         p("Cliquez sur l'engrenage pour visualiser la répartition des macronutriments."),
+                         sidebar = boxSidebar(width = 25,id = "mySidebar2", uiOutput("dynamic_ui")),
+                         p("Source : Ciqual 2020"),
+                         plotlyOutput("histogram", height = 600)
+                       )
+                     )
+              )
+            )
+    ),
+    
                     # 4.3 Micronutriments
                     tabItem(tabName = "micronutriments",
-                            mainPanel(width = 12,
-                                      h4("Minéraux et vitamines ?"),
-                                      p("L’alimentation apporte des macronutriments et des micronutriments."),
-                                      p("La micronutrition demande de la vigilance et de la disponibilité pour la préparation d'une alimentation à base de produits frais adaptée à l'intensité de vos exercices."),
-                                      tags$ul(
-                                        tags$li("Les macronutriments : protéines, lipides et glucides fournissent l’énergie nécessaire au fonctionnement du métabolisme. Ils sont issus des aliments."),
-                                        tags$li("Les micronutriments : vitamines, minéraux et oligoéléments, acides gras contenus dans les aliments ou résultant de la transformation des macronutriments. Ils sont nécessaires pour que nos cellules transforment correctement les macronutriments en énergie.")
-                                      ),
-                                      h4("Quelques conseils"),
-                                      p("Pour identifier et suivre d'éventuelles carences, vous pouvez réaliser une prise de sang par an."),
-                                      tags$ul(
-                                        tags$li("De bonnes graisses (omega 3) pour les articulations (poisson, oléagineux, huile de colza, lin...)."),
-                                        tags$li("De la viande rouge (fer) 2 fois par semaine et pas 2 jours consécutifs."),
-                                        tags$li("Des légumineuses pour faire le stock de glycogène et apporter des glucides de qualité."),
-                                        tags$li("Des légumes en quantité illimitée pour les fibres et les vitamines."),
-                                        tags$li("Des fruits riches en antioxydants : fruits rouges et oranges en particulier."),
-                                        tags$li("Des aliments probiotiques pour l'équilibre intestinal.")
-                                      ),
-                                      h4("Où trouver mes micronutriments ?"),
-                                      p("Ici, vous pouvez observer certains micronutriments qui se trouvent généralement dans les protéines, glucides et lipides.")
-                            ),
-                            sidebarPanel(width = 6,
-                                         h4("Que dit ce graphique ?"),
-                                         actionButton(inputId = "correlation_interpretation_p", label = "Exemple de corrélation positive"),
-                                         actionButton(inputId = "correlation_interpretation_n", label = "Exemple de corrélation négative"),
-                                         bsTooltip(id = "correlation_interpretation_p",
-                                                   title = "Les Lipides (n°18) sont corrélés positivement avec les AG saturés (n°32), AG monoinsaturés (n°32), et AG polyinsaturés (n°34), mais aussi avec les acides oléiques (n°43) et palmitiques (n°41).",
-                                                   trigger = "hover"),
-                                         bsTooltip(id = "correlation_interpretation_n",
-                                                   title = "L'Eau (n°14) est corrélée négativement avec notamment l'énergie (n°10:13), les Glucides (n°17) et les Lipides (n°18).",
-                                                   trigger = "hover"),
-                                         p(""),
-                                         selectInput(inputId = "number", label = "Sélectionner un numéro :", choices = as.character(seq(10, 35, 1))),
-                                         textOutput("corresponding_name"),
-                                         p("Source : Ciqual 2020")
-                            ),
-                            mainPanel(width = 6,
-                                      h4("Matrice de corrélation"),
-                                      plotlyOutput("corr_Heatmap"))
+                            fluidRow(
+                              column(width = 12,
+                                     fluidRow(
+                                       bs4Card(width = 6,
+                                               title = "Minéraux et vitamines ?",
+                                               status = "primary",
+                                               solidHeader = TRUE,
+                                               p("L’alimentation apporte des macronutriments et des micronutriments."),
+                                               p("La micronutrition demande de la vigilance et de la disponibilité pour la préparation d'une alimentation à base de produits frais adaptée à l'intensité de vos exercices."),
+                                               tags$ul(
+                                                 tags$li("Les macronutriments : protéines, lipides et glucides fournissent l’énergie nécessaire au fonctionnement du métabolisme. Ils sont issus des aliments."),
+                                                 tags$li("Les micronutriments : vitamines, minéraux et oligoéléments, acides gras contenus dans les aliments ou résultant de la transformation des macronutriments. Ils sont nécessaires pour que nos cellules transforment correctement les macronutriments en énergie."))
+                                               ),
+                                       bs4Card(width = 6,
+                                               title = "Quelques conseils",
+                                               status = "primary",
+                                               solidHeader = TRUE,
+                                               collapsible = TRUE,
+                                               collapsed = TRUE,  
+                                               
+                                               p("Pour identifier et suivre d'éventuelles carences, vous pouvez réaliser une prise de sang par an."),
+                                               tags$ul(
+                                                 tags$li("De bonnes graisses (omega 3) pour les articulations (poisson, oléagineux, huile de colza, lin...)."),
+                                                  tags$li("De la viande rouge (fer) 2 fois par semaine et pas 2 jours consécutifs."),
+                                                  tags$li("Des légumineuses pour faire le stock de glycogène et apporter des glucides de qualité."),
+                                                  tags$li("Des légumes en quantité illimitée pour les fibres et les vitamines."),
+                                                  tags$li("Des fruits riches en antioxydants : fruits rouges et oranges en particulier."),
+                                                  tags$li("Des aliments probiotiques pour l'équilibre intestinal."))
+                                               ),
+                                       bs4Card(width = 12,
+                                               title = "Où trouver mes micronutriments ?",
+                                               status = "primary",
+                                               p("Ici, vous pouvez observer certains micronutriments qui se trouvent généralement dans les protéines, glucides et lipides."),
+                                               sidebar = boxSidebar(width = 25,id = "mySidebar3",
+                                                                    actionButton(inputId = "correlation_interpretation_p", label = "Exemple de corrélation positive", title = "Les Lipides (n°18) sont corrélés positivement avec les AG saturés (n°32), AG monoinsaturés (n°32), et AG polyinsaturés (n°34), mais aussi avec les acides oléiques (n°43) et palmitiques (n°41)."),
+                                                                    actionButton(inputId = "correlation_interpretation_n", label = "Exemple de corrélation négative", title = "L'Eau (n°14) est corrélée négativement avec notamment l'énergie (n°10:13), les Glucides (n°17) et les Lipides (n°18)."),
+                                                                    bsTooltip(id = "correlation_interpretation_p", title = "Les Lipides (n°18) sont corrélés positivement avec les AG saturés (n°32), AG monoinsaturés (n°32), et AG polyinsaturés (n°34), mais aussi avec les acides oléiques (n°43) et palmitiques (n°41)."),
+                                                                    bsTooltip(id = "correlation_interpretation_n", title = "L'Eau (n°14) est corrélée négativement avec notamment l'énergie (n°10:13), les Glucides (n°17) et les Lipides (n°18)."),
+                                                                    selectInput(inputId = "number", label = "Sélectionner un numéro :", choices = as.character(seq(10, 35, 1))),
+                                                                    textOutput("corresponding_name"),
+                                                                    p("Source : Ciqual 2020")),
+                                               h4("Matrice de corrélation"),
+                                               plotlyOutput("corr_Heatmap"))
+                                               ),
+                            )
+                            )
                             ),
                     
                     # 4.4 Supplémentation
                     tabItem(tabName = "supplementation",
-                            mainPanel(width = 12,
-                                      h4("Gardez à l'esprit qu'il n'existe pas de pilule magique !"),
-                                      p("Certains suppléments peuvent vous aider à combler des lacunes alimentaires et à soutenir vos entraînements, mais avant tout, il est fondamental d'affiner votre programme d'entraînement et de mettre en place un plan nutritionnel en phase avec vos objectifs."),
-                                      p("Ne vous laissez pas piéger par le marketing et les publicités aguicheuses, tous les compléments et toutes les marques ne se valent pas !"),
-                                      p("Pour choisir les bons compléments qui prennent soin tant de votre santé, que de celle de la planète, vous pouvez utiliser le ScanNuts de ",
-                                        a("Innutswetrust.", href = "https://innutswetrust.fr/")),
-                                      p("Pour en apprendre plus sur les aspects scientifiques des compléments alimentaires, vous pouvez aller sur le site ",
-                                        a("Examine.", href = "https://examine.com/supplements/")
-                                      ),
-                                      h4("Quels compléments alimentaires ?"),
-                                      actionButton(inputId = "pre_entrainement", label = "Pré-entraînement"),
-                                      actionButton(inputId = "intra_entrainement", label = "Intra-entraînement"),
-                                      actionButton(inputId = "post_entrainement", label = "Post-entraînement"),
-                                      actionButton(inputId = "sante", label = "Santé"),
-                                      bsTooltip(id = "pre_entrainement",
-                                                title = "Caféine, Bêta-Alanine, L-Arginine, Glutamine, Malate De Citrulline",
-                                                trigger = "hover"),
-                                      bsTooltip(id = "intra_entrainement",
-                                                title = "Maltodextrine, Electrolytes",
-                                                trigger = "hover"),
-                                      bsTooltip(id = "post_entrainement",
-                                                title = "Créatine, Whey",
-                                                trigger = "hover"),
-                                      bsTooltip(id = "sante",
-                                                title = "Multivitamines, Multiminéraux, Collagène type I, Omega 3, Vitamine D, Zinc, Magnésium...",
-                                                trigger = "hover"))
-                            ),
+                            bs4Card(width = 12,
+                                               title = "Gardez à l'esprit qu'il n'existe pas de pilule magique !",
+                                               status = "primary",
+                                               solidHeader = TRUE,
+                                               p("Certains suppléments peuvent vous aider à combler des lacunes alimentaires et à soutenir vos entraînements, mais avant tout, il est fondamental d'affiner votre programme d'entraînement et de mettre en place un plan nutritionnel en phase avec vos objectifs."),
+                                              p("Ne vous laissez pas piéger par le marketing et les publicités aguicheuses, tous les compléments et toutes les marques ne se valent pas !"),
+                                              p("Pour choisir les bons compléments qui prennent soin tant de votre santé, que de celle de la planète, vous pouvez utiliser le ScanNuts de ",
+                                                a("Innutswetrust.", href = "https://innutswetrust.fr/")),
+                                              p("Pour en apprendre plus sur les aspects scientifiques des compléments alimentaires, vous pouvez aller sur le site ",
+                                                a("Examine.", href = "https://examine.com/supplements/")
+                                                ),
+                                       bs4Card(width = 12,
+                                               title = "Quels compléments alimentaires ?",
+                                               status = "primary",
+                                               solidHeader = TRUE,
+                                               collapsible = TRUE,
+                                               collapsed = TRUE,
+                                               
+                                               actionButton(inputId = "pre_entrainement", label = "Pré-entraînement", title = "Caféine, Bêta-Alanine, L-Arginine, Glutamine, Malate De Citrulline"),
+                                               actionButton(inputId = "intra_entrainement", label = "Intra-entraînement", title = "Maltodextrine, Electrolytes"),
+                                               actionButton(inputId = "post_entrainement", label = "Post-entraînement", title = "Créatine, Whey"),
+                                               actionButton(inputId = "sante", label = "Santé", title = "Multivitamines, Multiminéraux, Collagène type I, Omega 3, Vitamine D, Zinc, Magnésium..."),
+                                      bsTooltip(id = "pre_entrainement", title = "Caféine, Bêta-Alanine, L-Arginine, Glutamine, Malate De Citrulline"),
+                                      bsTooltip(id = "intra_entrainement", title = "Maltodextrine, Electrolytes"),
+                                      bsTooltip(id = "post_entrainement", title = "Créatine, Whey"),
+                                      bsTooltip(id = "sante", title = "Multivitamines, Multiminéraux, Collagène type I, Omega 3, Vitamine D, Zinc, Magnésium...")
+                                      )
+                            )),
 
   # Onglet Sources
   tabItem(tabName = "sources",
@@ -510,14 +614,16 @@ server <- function(input, output, session) {
       name = "Lucie HUBERT",
       image = "https://media.licdn.com/dms/image/D4E03AQErycNPVoJRhw/profile-displayphoto-shrink_800_800/0/1666273099421?e=1726099200&v=beta&t=EierabsopiNJWADMmh9YLrOzBQyShQ_6GGZucBfJ4RU",
       title = "Etudiante",
-      fluidRow(
-        column(
-          width = 12,
-          align = "center",
-          tags$a(href = "www.linkedin.com/in/lucie-hubert-74490b233", 
+      fluidRow(       
+        column(        
+          width = 12,        
+          tags$a(href = "https://www.linkedin.com/in/lucie-hubert-74490b233/", 
                  HTML('<i class="fab fa-linkedin fa-2x"></i>'), 
+                 style = "color: #0077B5; text-decoration: none; margin-left: 10px;"),
+          tags$a(href = "https://github.com/LucieHbt", 
+                 HTML('<i class="fab fa-github fa-2x"></i>'), 
                  style = "color: #0077B5; text-decoration: none; margin-left: 10px;")
-        ),
+        )
       )
     )
   })
@@ -565,17 +671,23 @@ server <- function(input, output, session) {
     data <- data.frame(Jour = factor(jours, levels = jours),
                        Exercices_day = exercises_per_day)
     
-    p <- ggplot(data, aes(x = Jour, fill = Exercices_day)) + 
-      geom_bar() + 
+    p <- ggplot(data, aes(x = Jour, fill = Exercices_day)) +
+      geom_bar() +
       theme_minimal() +
       theme(legend.position = "none",
             axis.title.x = element_blank(),
             axis.title.y = element_blank(),
             axis.text.y = element_blank(),
-            axis.ticks.y = element_blank()) +
+            axis.ticks.y = element_blank(),
+            axis.text.x = element_text(color = "#007bff")) +  # Couleur du texte sur l'axe des abscisses
       scale_x_discrete(labels = jours)
     
-    ggplotly(p)
+    # Convertir le ggplot en plotly
+    ggplotly(p) %>%
+      layout(
+        paper_bgcolor = "rgba(0,0,0,0)",  # Couleur de l'arrière-plan transparente
+        plot_bgcolor = "rgba(0,0,0,0)"    # Couleur de la zone de traçage transparente
+      )
   })
   
   ##############################
@@ -1071,11 +1183,6 @@ server <- function(input, output, session) {
       )
   }
   
-    output$histogram <- renderPlotly({
-      generate_nutrient_histogram(data, input$nutrient, input$select_level, input$hist_color)
-      })
-    
-
   # Reactive expression to create the dynamic title
   output$histo_title <- renderUI({
     nutrient_name <- switch(input$nutrient,
@@ -1085,6 +1192,21 @@ server <- function(input, output, session) {
     h4(paste("Distribution des", nutrient_name))
   })
   
+  
+  # Rendu dynamique dans l'UI
+  output$dynamic_ui <- renderUI({
+    tagList(
+      selectInput("nutrient", "Macronutriment :", choices = c("proteines", "glucides", "lipides"), selected = "proteines"),
+      radioButtons(inputId = "select_level", label = "Sélectionner le niveau :", choices = c("Groupes" = "alim_ssgrp_nom_fr", "Sous-groupes" = "alim_ssssgrp_nom_fr")),
+      colourpicker::colourInput(inputId = "hist_color", label = "Choisir une couleur :", value = "#C43413")
+    )
+  })
+
+  output$histogram <- renderPlotly({
+    req(input$nutrient, input$select_level, input$hist_color)  # Ensure inputs are available
+    generate_nutrient_histogram(data, input$nutrient, input$select_level, input$hist_color)
+  })
+
   #################################
   ######## MICRONUTRIMENTS ########
   #################################
@@ -1187,7 +1309,7 @@ server <- function(input, output, session) {
     plot_ly(data, labels = ~Macronutrient, values = ~Calories, type = 'pie', 
             text = ~paste(round(Grams, 2), 'g'),
             textinfo = 'label+text+percent') %>%
-      layout(showlegend = FALSE)
+      layout(showlegend = FALSE, paper_bgcolor = "rgba(0,0,0,0)")  # Couleur de l'arrière-plan transparente)
   })
   
   output$macro_title <- renderText({
