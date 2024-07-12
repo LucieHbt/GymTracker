@@ -1,9 +1,10 @@
-## Application Shiny Gym Tracker !
-
+# Application Shiny Gym Tracker !
 ## Présentation
-Bienvenue sur Gym Tracker ! Cette application Shiny vous aide à planifier vos séances d'entraînement et à suivre votre plan nutritionnel. 
-Cette application s'inspire des travaux de M. Helms sur la science du sport et de la nutrition, qui mettent en avant les priorités à prendre en compte pour contrôler son entraînement et son alimentation.
+Bienvenue sur Gym Tracker ! Cette application Shiny vous aide à planifier vos séances d'entraînement et à suivre votre plan nutritionnel.
+
 Que vous soyez un passionné de fitness, un athlète ou un coach, Gym Tracker est un outil pour vous accompagner et pour améliorer votre expérience d'entraînement !
+
+Cette application s'inspire des travaux de M. Helms sur la science du sport et de la nutrition, qui mettent en avant les priorités à prendre en compte pour contrôler son entraînement et son alimentation.
 
 ## Fonctionnalités
 - **Planification Hebdomadaire des Entraînements** : Planifiez et programmez vos séances d'entraînement hebdomadaires.
