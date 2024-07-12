@@ -1,33 +1,31 @@
-# Gym Tracker Shiny App
+## Application Shiny Gym Tracker !
 
-## Overview
+## Présentation
+Bienvenue sur Gym Tracker ! Cette application Shiny vous aide à planifier vos séances d'entraînement et à suivre votre plan nutritionnel. 
+Cette application s'inspire des travaux de M. Helms sur la science du sport et de la nutrition, qui mettent en avant les priorités à prendre en compte pour contrôler son entraînement et son alimentation.
+Que vous soyez un passionné de fitness, un athlète ou un coach, Gym Tracker est un outil pour vous accompagner et pour améliorer votre expérience d'entraînement !
 
-Welcome to Gym Tracker! This Shiny application helps you plan your workout sessions and track your nutritional plan. Whether you're a fitness enthusiast, athlete, or coach, Gym Tracker provides tools to enhance your training experience !
-
-## Features
-
-- **Weekly Workout Planning**: Plan and schedule your weekly workout sessions.
-- **Exercise Customization**: Add and personalize exercises to suit your training needs.
-- **Theoretical Performance Calculation**: Calculate theoretical performance metrics based on your inputs.
-- **Training Volume Distribution**: Understand and visualize your training volume distribution.
-- **Exercise Selection Tips**: Get guidance on selecting appropriate exercises for your goals.
-- **Sports Nutrition Basics**: Learn fundamentals of sports nutrition to support your fitness journey.
+## Fonctionnalités
+- **Planification Hebdomadaire des Entraînements** : Planifiez et programmez vos séances d'entraînement hebdomadaires.
+- **Personnalisation des Exercices** : Ajoutez et personnalisez des exercices pour répondre à vos besoins d'entraînement.
+- **Calcul de Performances Théoriques** : Calculez des métriques de performance théoriques basées sur vos données.
+- **Distribution du Volume d'Entraînement** : Comprenez et visualisez la répartition de votre volume d'entraînement.
+- **Conseils de Sélection des Exercices** : Obtenez des conseils pour sélectionner les exercices appropriés selon vos objectifs.
+- **Bases de la Nutrition Sportive** : Prenez connaissance des bases de la nutrition sportive..
 
 ## Instructions
-
-1. Use the tabs at the top to navigate through different features of the application:
-   - **Présentation**: Overview and introduction.
-   - **Training**: Plan and edit your workout sessions.
-   - **Nutrition**: Learn basics of sports nutrition.
-   - **Sources**: View used references and credits.
-
+Utilisez les onglets en haut pour naviguer entre les différentes fonctionnalités de l'application :
+- **Présentation** : Vue d'ensemble et introduction.
+- **Pyramide de l'entraînement** : Comprenez comment structurer vos séances selon vos objectifs.
+- **Entraînement** : Planifiez et éditez vos séances d'entraînement.
+- **Pyramide de la nutrition** : Obtenez les bases de la nutrition sportive.
+- **Sources** : Consultez les références utilisées et les crédits.
+  
 ![Gym Tracker Screenshot](screenshot.png)
-
-*Image credit: The Muscle and Strength Pyramids: nutrition and training. (2023). [muscleandstrengthpyramids.com](https://muscleandstrengthpyramids.com/)*
+*Crédit image : The Muscle and Strength Pyramids: nutrition et entraînement. (2023). [muscleandstrengthpyramids.com](https://muscleandstrengthpyramids.com/)*
 
 ## Installation
+Pour exécuter cette application localement, assurez-vous d'avoir R et Shiny installés. Clonez ce dépôt et ouvrez le fichier `app.R` dans RStudio. Lancez l'application en utilisant le bouton `Run App` dans RStudio.
 
-To run this application locally, ensure you have R and Shiny installed. Clone this repository and open the `app.R` file in RStudio. Run the application using the `Run App` button in RStudio.
-
-## Application 
-Link online: <https://luciehubert.shinyapps.io/RealGymTracker/>
+## Application
+Lien en ligne : https://luciehubert.shinyapps.io/RealGymTracker/ 
