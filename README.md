@@ -28,5 +28,6 @@ Utilisez les onglets en haut pour naviguer entre les différentes fonctionnalit�
 Pour exécuter cette application localement, assurez-vous d'avoir R et Shiny installés. Clonez ce dépôt et ouvrez le fichier `app.R` dans RStudio. Lancez l'application en utilisant le bouton `Run App` dans RStudio.
 
 ## Application
-Lien de la version complète : https://luciehubert.shinyapps.io/RealGymTracker/ 
+Lien de la version complète : https://luciehubert.shinyapps.io/RealGymTracker/
+
 Lien de la version condensée : https://luciehubert.shinyapps.io/GymPlanif/
