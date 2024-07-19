@@ -23,7 +23,6 @@ Utilisez les onglets en haut pour naviguer entre les différentes fonctionnalit�
 - **Sources** : Consultez les références utilisées et les crédits.
   
 ![Gym Tracker Screenshot](screenshot.png)
-*Crédit image : The Muscle and Strength Pyramids: nutrition et entraînement. (2023). [muscleandstrengthpyramids.com](https://muscleandstrengthpyramids.com/)*
 
 ## Installation
 Pour exécuter cette application localement, assurez-vous d'avoir R et Shiny installés. Clonez ce dépôt et ouvrez le fichier `app.R` dans RStudio. Lancez l'application en utilisant le bouton `Run App` dans RStudio.
